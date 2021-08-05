@@ -15,6 +15,8 @@ mod url {
         let params: Vec<(&str, &str)> = vec![
             ("page[limit]", size_str),
             ("page[offset]", start_str),
+            //filter audio books
+            ("filter[list-all]", "0"),
             ("sort", &val_sort),
             ("fields[radios]", &val_fields),
             ("include", "media"),
