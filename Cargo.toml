@@ -1,0 +1,18 @@
+[package]
+name = "gcores_podcast_intl"
+version = "1.0.1"
+authors = ["DevGroup dev@zheteng.cloud"]
+edition = "2018"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lambda_runtime = "^0.3"
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+tokio = { version = "^1", features = ["full"] }
+simple_logger = "^1"
+log = "^0.4"
+simple-error = "^0"
+reqwest = { version = "^0.11", features = ["json", "rustls-tls"] }
