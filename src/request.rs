@@ -48,6 +48,8 @@ mod url {
 
 pub mod req {
     use super::url::concat_url;
+    use simple_error::SimpleError;
+
     pub struct Client {
         url: String,
         start: u16,
@@ -55,13 +57,19 @@ pub mod req {
     }
 
     impl Client {
-        pub async fn fetch(&self) -> Result<String, reqwest::Error> {
-            let url = concat_url(self.url.clone(), self.start, self.size).unwrap();
-            let res = reqwest::get(url).await?;
+        pub async fn fetch(&self) -> Result<String, SimpleError> {
+            let url1 = concat_url(self.url.clone(), self.start, self.size)
+                .ok_or_else(|| SimpleError::new("url error"))?;
+            let res = reqwest::get(url1)
+                .await
+                .map_err(|_| SimpleError::new("response error"))?;
 
-            println!("Status: {}", res.status());
+            let body = res
+                .text()
+                .await
+                .map_err(|_| SimpleError::new("body error"))?;
 
-            res.text().await
+            Ok(body)
         }
     }
 
