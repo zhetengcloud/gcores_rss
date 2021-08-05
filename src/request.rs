@@ -50,6 +50,7 @@ mod url {
 
 pub mod req {
     use super::url::concat_url;
+    use crate::model::api;
     use simple_error::SimpleError;
 
     pub struct Client {
@@ -59,19 +60,16 @@ pub mod req {
     }
 
     impl Client {
-        pub async fn fetch(&self) -> Result<String, SimpleError> {
+        pub async fn fetch(&self) -> Result<api::Response, SimpleError> {
             let url1 = concat_url(self.url.clone(), self.start, self.size)
                 .ok_or_else(|| SimpleError::new("url error"))?;
-            let res = reqwest::get(url1)
-                .await
-                .map_err(|_| SimpleError::new("response error"))?;
 
-            let body = res
-                .text()
+            reqwest::get(url1)
                 .await
-                .map_err(|_| SimpleError::new("body error"))?;
-
-            Ok(body)
+                .map_err(|_| SimpleError::new("response error"))?
+                .json::<api::Response>()
+                .await
+                .map_err(|_| SimpleError::new("json error"))
         }
     }
 
@@ -87,8 +85,10 @@ pub mod req {
                 start: 3u16,
                 size: 4u16,
             };
-            let json = cl.fetch().await.unwrap();
-            println!("{}", json);
+            let resp = cl.fetch().await.unwrap();
+            for radio in resp.data {
+                println!("{}", radio.attributes.title);
+            }
         }
     }
 }
