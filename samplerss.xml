@@ -1,0 +1,36 @@
+<!-- https://help.apple.com/itc/podcasts_connect/#/itcb54353390 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+<channel>
+<title>Example Podpcast</title>
+<description>Description of podcast.</description>
+<itunes:image href="http://www.example.com/podcast-icon.jpg" />
+<language>en-us</language>
+<itunes:category text="Category One"/></itunes:category>
+<itunes:explicit>false</itunes:explicit>
+<itunes:author>John Doe</itunes:author>
+<link>http://www.example.com/<link>
+<itunes:owner>
+    <itunes:name>Owner Name</itunes:name>
+    <itunes:email>me@example.com</itunes:email>
+</itunes:owner>
+<item>
+    <title>Episode 1</title>
+    <enclosure url="http://example.com/podcast1.mp3" type="audio/mpeg" length="1024"></enclosure>
+    <guid>http://example.com/podcast1</guid>
+    <pubDate>Thu, 21 Dec 2016 11:00:00 +0000</pubDate>
+    <description>Description 1</description>
+    <itunes:duration>600</itunes:duration>
+    <link>http://example.com/podcast1</link>
+</item> 
+<item>
+    <title>Episode 2</title>
+    <enclosure url="http://example.com/podcast2.mp3" type="audio/mpeg" length="1024"></enclosure>
+    <guid>http://example.com/podcast2</guid>
+    <pubDate>Thu, 21 Dec 2016 12:00:00 +0001</pubDate>
+    <description>Description 2</description>
+    <itunes:duration>2000</itunes:duration>
+    <link>http://example.com/podcast2</link>
+</item> 
+</channel>
+</rss>

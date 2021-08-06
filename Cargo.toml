@@ -1,5 +1,5 @@
 [package]
-name = "gcores_podcast_intl"
+name = "gcores_rss"
 version = "1.0.1"
 authors = ["DevGroup dev@zheteng.cloud"]
 edition = "2018"
@@ -16,3 +16,4 @@ simple_logger = "^1"
 log = "^0.4"
 simple-error = "^0"
 reqwest = { version = "^0.11", features = ["json", "rustls-tls"] }
+quick-xml = { version = "^0.22", features = [ "serialize" ] }
