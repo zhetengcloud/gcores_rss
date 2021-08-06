@@ -37,3 +37,33 @@ pub mod api {
         }
     }
 }
+
+pub struct Channel<'a> {
+    pub title: &'a str,
+    pub description: &'a str,
+    pub image: &'a str,
+    pub language: &'a str,
+    pub category1: &'a str,
+    pub category2: &'a str,
+    pub explicit: &'a str,
+    pub link: &'a str,
+    pub owner_name: &'a str,
+    pub owner_email: &'a str,
+}
+
+impl<'a> Default for Channel<'a> {
+    fn default() -> Self {
+        Channel {
+            title: "",
+            description: "",
+            image: "",
+            language: "zh-cn",
+            category1: "Leisure",
+            category2: "Video Game",
+            explicit: "true",
+            link: "",
+            owner_name: "",
+            owner_email: "",
+        }
+    }
+}
