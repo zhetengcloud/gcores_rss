@@ -1,11 +1,11 @@
 use crate::model::api::Response;
-use quick_xml::events::{BytesDecl, Event};
+use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, Event};
 use quick_xml::Writer;
-use simple_error::SimpleError;
+use std::error::Error;
 use std::io::Cursor;
 
 trait Serializer {
-    fn to_xml(&self, resp: &Response) -> Result<String, SimpleError>;
+    fn to_xml(&self, resp: &Response) -> Result<String, Box<dyn Error>>;
 }
 
 pub struct Itune {
@@ -13,18 +13,31 @@ pub struct Itune {
     xmlns: String,
 }
 
+static RSS: &str = "rss";
+static CHANNEL: &str = "channel";
+static TITLE: &str = "title";
+
 impl Serializer for Itune {
-    fn to_xml(&self, resp: &Response) -> Result<String, SimpleError> {
-        let mut writer = Writer::new(Cursor::new(Vec::new()));
+    fn to_xml(&self, resp: &Response) -> Result<String, Box<dyn Error>> {
+        //ascii space 32
+        let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), 32u8, 2);
+        writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
+        writer.write_event(Event::Start(BytesStart::owned(RSS.as_bytes(), RSS.len())))?;
 
-        writer
-            .write_event(Event::Decl(BytesDecl::new(b"1.0", None, None)))
-            .expect("decl error");
+        //channel
+        writer.write_event(Event::Start(BytesStart::owned(CHANNEL.as_bytes(), CHANNEL.len())))?;
 
-        writer.write_event(Event::Eof).expect("eof error");
+        //title
+        writer.write_event(Event::Start(BytesStart::owned(TITLE.as_bytes(),TITLE.len())))?;
+
+        writer.write_event(Event::End(BytesEnd::borrowed(TITLE.as_bytes())))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(CHANNEL.as_bytes())))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(RSS.as_bytes())))?;
+
+        writer.write_event(Event::Eof)?;
 
         let data = writer.into_inner().into_inner();
-        String::from_utf8(data).map_err(|x| SimpleError::new(x.to_string()))
+        Ok(String::from_utf8(data)?)
     }
 }
 
@@ -41,8 +54,8 @@ mod tests {
             xmlns: "dtd1".to_string(),
             version: "2.0".to_string(),
         };
-        let json: String = fs::read_to_string("api_response.json").expect("file reading error");
-        let response: Response = serde_json::from_str(&json).expect("json deserialization error");
+        let json: String = fs::read_to_string("api_response.json")?;
+        let response: Response = serde_json::from_str(&json)?;
         let xml_str = itune.to_xml(&response)?;
         println!("{}", xml_str);
         Ok(())
