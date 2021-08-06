@@ -1,0 +1,82 @@
+{
+  "data": [
+    {
+      "id": "139509",
+      "type": "radios",
+      "attributes": {
+        "title": "免费试听集：《伪神》Episode 1",
+        "desc": "战锤·荷鲁斯之乱系列有声书",
+        "thumb": "fe15d545-8434-497d-82de-4081ea5036cd.jpg",
+        "published-at": "2021-07-27T22:00:00.000+08:00"
+      },
+      "meta": { "vote-flag": null, "vote-id": null, "bookmark-id": null }
+    },
+    {
+      "id": "139592",
+      "type": "radios",
+      "attributes": {
+        "title": "用这几款桌游来体验穿梭在“生死之间”",
+        "desc": "濒死体验与灵魂出窍，在桌游里感受这些传说中的故事",
+        "thumb": "31051b44-9342-444a-bad7-7f928d55502f.jpg",
+        "published-at": "2021-07-26T22:54:00.000+08:00"
+      },
+      "meta": { "vote-flag": null, "vote-id": null, "bookmark-id": null }
+    },
+    {
+      "id": "139339",
+      "type": "radios",
+      "attributes": {
+        "title": "《死亡空间》回来了！GadioNews07.24",
+        "desc": "没想到",
+        "thumb": "029f2b3e-4834-42ff-b40d-d7e4da3f8f6c.jpg",
+        "published-at": "2021-07-24T23:00:00.000+08:00"
+      },
+      "meta": { "vote-flag": null, "vote-id": null, "bookmark-id": null }
+    }
+  ],
+  "included": [
+    {
+      "id": "5391",
+      "type": "medias",
+      "attributes": {
+        "audio": "5d499753-a4d1-409e-9a1a-d6bb0e23e7a1.mp3",
+        "duration": 2830,
+        "title": "免费试听集 伪神-1（7/27 22:00上线）",
+        "original-src": null,
+        "created-at": "2021-07-15T15:34:22.000+08:00",
+        "media-type": "audio",
+        "process-state": "success",
+        "playlist": null
+      }
+    },
+    {
+      "id": "5438",
+      "type": "medias",
+      "attributes": {
+        "audio": "1ac13e96-96e3-4402-8508-1c3527f62d95.mp3",
+        "duration": 3474,
+        "title": "濒死体验桌游",
+        "original-src": null,
+        "created-at": "2021-07-23T16:29:18.000+08:00",
+        "media-type": "audio",
+        "process-state": "success",
+        "playlist": null
+      }
+    },
+    {
+      "id": "5437",
+      "type": "medias",
+      "attributes": {
+        "audio": "cd22ef44-4a22-4e3b-8b6d-87fc52a15409.mp3",
+        "duration": 4041,
+        "title": "新闻0723",
+        "original-src": null,
+        "created-at": "2021-07-23T04:15:14.000+08:00",
+        "media-type": "audio",
+        "process-state": "success",
+        "playlist": null
+      }
+    }
+  ],
+  "meta": { "record-count": 30000 }
+}

@@ -1,5 +1,5 @@
 // example of request
-// https://www.gcores.com/gapi/v1/radios?page[limit]=3&page[offset]=12&sort=-published-at&fields[radios]=title,desc,thumb,published-at&include=media
+// https://www.gcores.com/gapi/v1/radios?page[limit]=3&filter[list-all]=0&page[offset]=12&sort=-published-at&fields[radios]=title,desc,thumb,published-at&include=media
 
 mod url {
 
