@@ -18,7 +18,17 @@ pub struct Itune<'a> {
 static RSS: &str = "rss";
 static CHANNEL: &str = "channel";
 static TITLE: &str = "title";
-static DTD1: &str = "http://www.itunes.com/dtds/podcast-1.0.dtd";
+
+impl<'a> Itune<'a> {
+    fn new() -> Self {
+        Itune {
+            xmlns: "xmlns:itunes",
+            xmlns_val:  "http://www.itunes.com/dtds/podcast-1.0.dtd",
+            version: "version",
+            version_val: "2.0",
+        }
+    }
+}
 
 impl<'a> Serializer for Itune<'a> {
     fn to_xml(&self, _resp: &Response) -> Result<String, Box<dyn Error>> {
@@ -63,12 +73,7 @@ mod tests {
 
     #[test]
     fn se_xml() -> Result<(), Box<dyn Error>> {
-        let itune = Itune {
-            xmlns: "xmlns:itunes",
-            xmlns_val: DTD1,
-            version: "version",
-            version_val: "2.0",
-        };
+        let itune = Itune::new();
         let json: String = fs::read_to_string("api_response.json")?;
         let response: Response = serde_json::from_str(&json)?;
         let xml_str = itune.to_xml(&response)?;
