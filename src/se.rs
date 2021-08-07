@@ -12,17 +12,23 @@ trait Serializer {
 pub struct Itune<'a> {
     version: (&'a str, &'a str),
     xmlns: (&'a str, &'a str),
+    category_tag: &'a str,
+    text_tag: &'a str,
 }
 
 static RSS: &str = "rss";
 static CHANNEL: &str = "channel";
 static TITLE: &str = "title";
+static DESCRIPTION: &str = "description";
+static LANGUAGE: &str = "language";
 
 impl<'a> Default for Itune<'a> {
     fn default() -> Self {
         Itune {
             xmlns: ("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd"),
             version: ("version", "2.0"),
+            category_tag: "itunes:category",
+            text_tag: "text",
         }
     }
 }
@@ -52,6 +58,37 @@ impl<'a> Serializer for Itune<'a> {
         writer.write_event(Event::Text(BytesText::from_plain_str(ch.title)))?;
         writer.write_event(Event::End(BytesEnd::borrowed(TITLE.as_bytes())))?;
 
+        //description
+        writer.write_event(Event::Start(BytesStart::owned(
+            DESCRIPTION.as_bytes(),
+            DESCRIPTION.len(),
+        )))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.description)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(DESCRIPTION.as_bytes())))?;
+
+        //language
+        writer.write_event(Event::Start(BytesStart::owned(
+            LANGUAGE.as_bytes(),
+            LANGUAGE.len(),
+        )))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.language)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(LANGUAGE.as_bytes())))?;
+
+        //category
+        let mut cat1 = BytesStart::owned(self.category_tag.as_bytes(), self.category_tag.len());
+        cat1.push_attribute((self.text_tag, ch.category1));
+        writer.write_event(Event::Start(cat1))?;
+
+        let mut cat2 = BytesStart::owned(self.category_tag.as_bytes(), self.category_tag.len());
+        cat2.push_attribute((self.text_tag, ch.category2));
+        writer.write_event(Event::Empty(cat2))?;
+
+        writer.write_event(Event::End(BytesEnd::borrowed(self.category_tag.as_bytes())))?;
+
+
+
+
+        //end
         writer.write_event(Event::End(BytesEnd::borrowed(CHANNEL.as_bytes())))?;
         writer.write_event(Event::End(BytesEnd::borrowed(RSS.as_bytes())))?;
 

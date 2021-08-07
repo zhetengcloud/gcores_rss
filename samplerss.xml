@@ -6,7 +6,9 @@
 <description>Description of podcast.</description>
 <itunes:image href="http://www.example.com/podcast-icon.jpg" />
 <language>en-us</language>
-<itunes:category text="Category One"/></itunes:category>
+<itunes:category text="Sports">
+  <itunes:category text="Wilderness"/>
+</itunes:category>
 <itunes:explicit>false</itunes:explicit>
 <itunes:author>John Doe</itunes:author>
 <link>http://www.example.com/<link>
