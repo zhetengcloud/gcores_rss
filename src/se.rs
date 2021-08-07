@@ -32,6 +32,7 @@ static ITEM: &str = "item";
 static CLOSURE: &str = "closure";
 static URL: &str = "url";
 static DURATION: &str = "duration";
+static GUID: &str = "guid";
 static MPEG: (&str, &str) = ("type", "audio/mpeg");
 
 impl<'a> Default for Itune<'a> {
@@ -49,19 +50,24 @@ impl<'a> Itune<'a> {
     fn to_item(&self, radio: &'a Radio, media: &'a inc::Media, ch: &Channel) -> Vec<Event> {
         let item = ITEM.as_bytes();
         let title = TITLE.as_bytes();
+        let audio_url: String = format!("{}{}", ch.media_base_url, media.attributes.audio);
+
         let closure = CLOSURE.as_bytes();
         let mut closure_ele = BytesStart::borrowed(closure, closure.len());
         closure_ele.push_attribute(MPEG);
-        closure_ele.push_attribute((
-            URL,
-            format!("{}{}", ch.media_base_url, media.attributes.audio).as_str(),
-        ));
+        closure_ele.push_attribute((URL, audio_url.as_str()));
         closure_ele.push_attribute((DURATION, media.attributes.duration.to_string().as_str()));
+
+        let guid = GUID.as_bytes();
+
         vec![
             Event::Start(BytesStart::borrowed(item, ITEM.len())),
             Event::Start(BytesStart::borrowed(title, title.len())),
             Event::Text(BytesText::from_plain_str(&radio.attributes.title)),
             Event::End(BytesEnd::borrowed(title)),
+            Event::Start(BytesStart::borrowed(guid, guid.len())),
+            Event::Text(BytesText::from_escaped_str(audio_url)),
+            Event::End(BytesEnd::borrowed(guid)),
             Event::Empty(closure_ele),
             Event::End(BytesEnd::borrowed(item)),
         ]
