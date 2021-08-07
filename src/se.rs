@@ -41,7 +41,7 @@ impl<'a> Default for Itune<'a> {
 }
 
 impl<'a> Serializer for Itune<'a> {
-    fn to_xml(&self, ch: Channel, _resp: &Response) -> Result<String, Box<dyn Error>> {
+    fn to_xml(&self, ch: Channel, resp: &Response) -> Result<String, Box<dyn Error>> {
         //ascii space 32
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), 32u8, 2);
         writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
@@ -134,6 +134,9 @@ impl<'a> Serializer for Itune<'a> {
         writer.write_event(Event::Text(BytesText::from_plain_str(ch.owner_email)))?;
         writer.write_event(Event::End(BytesEnd::borrowed(email.as_bytes())))?;
         writer.write_event(Event::End(BytesEnd::borrowed(owner.as_bytes())))?;
+
+        //item
+        resp.data.iter().zip(resp.included.iter());
 
         //end
         writer.write_event(Event::End(BytesEnd::borrowed(CHANNEL.as_bytes())))?;
