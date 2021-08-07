@@ -9,6 +9,7 @@ pub mod api {
 
     #[derive(Deserialize, Debug)]
     pub struct Radio {
+        //link: https://www.gcores.com/radios/{id}
         pub id: String,
         pub attributes: Attribute,
     }
