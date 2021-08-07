@@ -12,7 +12,7 @@ trait Serializer {
 pub struct Itune<'a> {
     version: (&'a str, &'a str),
     xmlns: (&'a str, &'a str),
-    category_tag: &'a str,
+    prefix: &'a str,
     text_tag: &'a str,
 }
 
@@ -21,20 +21,24 @@ static CHANNEL: &str = "channel";
 static TITLE: &str = "title";
 static DESCRIPTION: &str = "description";
 static LANGUAGE: &str = "language";
+static CATEGORY: &str = "language";
+static EXPLICIT: &str = "explicit";
+static AUTHOR: &str = "author";
+static LINK: &str = "link";
 
 impl<'a> Default for Itune<'a> {
     fn default() -> Self {
         Itune {
             xmlns: ("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd"),
             version: ("version", "2.0"),
-            category_tag: "itunes:category",
+            prefix: "itunes:",
             text_tag: "text",
         }
     }
 }
 
 impl<'a> Serializer for Itune<'a> {
-    fn to_xml(&self, ch: Channel, resp: &Response) -> Result<String, Box<dyn Error>> {
+    fn to_xml(&self, ch: Channel, _resp: &Response) -> Result<String, Box<dyn Error>> {
         //ascii space 32
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), 32u8, 2);
         writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
@@ -63,7 +67,7 @@ impl<'a> Serializer for Itune<'a> {
             DESCRIPTION.as_bytes(),
             DESCRIPTION.len(),
         )))?;
-        writer.write_event(Event::Text(BytesText::from_plain_str(ch.description)))?;
+        writer.write_event(Event::CData(BytesText::from_plain_str(ch.description)))?;
         writer.write_event(Event::End(BytesEnd::borrowed(DESCRIPTION.as_bytes())))?;
 
         //language
@@ -75,18 +79,39 @@ impl<'a> Serializer for Itune<'a> {
         writer.write_event(Event::End(BytesEnd::borrowed(LANGUAGE.as_bytes())))?;
 
         //category
-        let mut cat1 = BytesStart::owned(self.category_tag.as_bytes(), self.category_tag.len());
+        let cat_str = format!("{}{}", self.prefix, CATEGORY);
+        let arr: &[u8] = cat_str.as_bytes();
+        let arr_len = arr.len();
+        let mut cat1 = BytesStart::owned(arr, arr_len);
         cat1.push_attribute((self.text_tag, ch.category1));
         writer.write_event(Event::Start(cat1))?;
 
-        let mut cat2 = BytesStart::owned(self.category_tag.as_bytes(), self.category_tag.len());
+        let mut cat2 = BytesStart::owned(arr, arr_len);
         cat2.push_attribute((self.text_tag, ch.category2));
         writer.write_event(Event::Empty(cat2))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(arr)))?;
 
-        writer.write_event(Event::End(BytesEnd::borrowed(self.category_tag.as_bytes())))?;
+        //explicit
+        writer.write_event(Event::Start(BytesStart::owned(
+            EXPLICIT.as_bytes(),
+            EXPLICIT.len(),
+        )))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.explicit)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(EXPLICIT.as_bytes())))?;
 
+        //author
+        let aut_tag = format!("{}{}", self.prefix, AUTHOR);
+        let aut_arr = aut_tag.as_bytes();
+        let len_aut = aut_arr.len();
+        writer.write_event(Event::Start(BytesStart::owned(aut_arr, len_aut)))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.author)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(aut_arr)))?;
 
-
+        //link
+        let link = LINK.as_bytes();
+        writer.write_event(Event::Start(BytesStart::owned(link, LINK.len())))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.link)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(link)))?;
 
         //end
         writer.write_event(Event::End(BytesEnd::borrowed(CHANNEL.as_bytes())))?;
@@ -113,6 +138,8 @@ mod tests {
             title: "test podcast",
             description: "some desc",
             image: "http://www.example.com/podcast-icon.jpg",
+            author: "John Doe",
+            link: "http://example.com",
             ..Default::default()
         };
         let json: String = fs::read_to_string("api_response.json")?;

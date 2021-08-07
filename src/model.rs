@@ -40,6 +40,7 @@ pub mod api {
 
 pub struct Channel<'a> {
     pub title: &'a str,
+    pub author: &'a str,
     pub description: &'a str,
     pub image: &'a str,
     pub language: &'a str,
@@ -55,6 +56,7 @@ impl<'a> Default for Channel<'a> {
     fn default() -> Self {
         Channel {
             title: "",
+            author: "",
             description: "",
             image: "",
             language: "zh-cn",
