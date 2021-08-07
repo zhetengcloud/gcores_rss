@@ -50,6 +50,7 @@ pub struct Channel<'a> {
     pub link: &'a str,
     pub owner_name: &'a str,
     pub owner_email: &'a str,
+    pub media_base_url: &'a str,
 }
 
 impl<'a> Default for Channel<'a> {
@@ -66,6 +67,7 @@ impl<'a> Default for Channel<'a> {
             link: "",
             owner_name: "",
             owner_email: "",
+            media_base_url: "https://",
         }
     }
 }

@@ -18,7 +18,7 @@
 </itunes:owner>
 <item>
     <title>Episode 1</title>
-    <enclosure url="http://example.com/podcast1.mp3" type="audio/mpeg" length="1024"></enclosure>
+    <enclosure url="http://example.com/podcast1.mp3" type="audio/mpeg" length="1024"/>
     <guid>http://example.com/podcast1</guid>
     <pubDate>Thu, 21 Dec 2016 11:00:00 +0000</pubDate>
     <description>Description 1</description>
@@ -27,7 +27,7 @@
 </item> 
 <item>
     <title>Episode 2</title>
-    <enclosure url="http://example.com/podcast2.mp3" type="audio/mpeg" length="1024"></enclosure>
+    <enclosure url="http://example.com/podcast2.mp3" type="audio/mpeg" length="1024"/>
     <guid>http://example.com/podcast2</guid>
     <pubDate>Thu, 21 Dec 2016 12:00:00 +0001</pubDate>
     <description>Description 2</description>

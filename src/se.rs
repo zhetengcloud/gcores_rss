@@ -1,4 +1,4 @@
-use crate::model::api::Response;
+use crate::model::api::{inc, Radio, Response};
 use crate::model::Channel;
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::Writer;
@@ -6,7 +6,7 @@ use std::error::Error;
 use std::io::Cursor;
 
 trait Serializer {
-    fn to_xml(&self, ch: Channel, resp: &Response) -> Result<String, Box<dyn Error>>;
+    fn to_xml(&self, ch: &Channel, resp: &Response) -> Result<String, Box<dyn Error>>;
 }
 
 pub struct Itune<'a> {
@@ -28,6 +28,11 @@ static LINK: &str = "link";
 static OWNER: &str = "owner";
 static NAME: &str = "name";
 static EMAIL: &str = "email";
+static ITEM: &str = "item";
+static CLOSURE: &str = "closure";
+static URL: &str = "url";
+static DURATION: &str = "duration";
+static MPEG: (&str, &str) = ("type", "audio/mpeg");
 
 impl<'a> Default for Itune<'a> {
     fn default() -> Self {
@@ -40,8 +45,31 @@ impl<'a> Default for Itune<'a> {
     }
 }
 
+impl<'a> Itune<'a> {
+    fn to_item(&self, radio: &'a Radio, media: &'a inc::Media, ch: &Channel) -> Vec<Event> {
+        let item = ITEM.as_bytes();
+        let title = TITLE.as_bytes();
+        let closure = CLOSURE.as_bytes();
+        let mut closure_ele = BytesStart::borrowed(closure, closure.len());
+        closure_ele.push_attribute(MPEG);
+        closure_ele.push_attribute((
+            URL,
+            format!("{}{}", ch.media_base_url, media.attributes.audio).as_str(),
+        ));
+        closure_ele.push_attribute((DURATION, media.attributes.duration.to_string().as_str()));
+        vec![
+            Event::Start(BytesStart::borrowed(item, ITEM.len())),
+            Event::Start(BytesStart::borrowed(title, title.len())),
+            Event::Text(BytesText::from_plain_str(&radio.attributes.title)),
+            Event::End(BytesEnd::borrowed(title)),
+            Event::Empty(closure_ele),
+            Event::End(BytesEnd::borrowed(item)),
+        ]
+    }
+}
+
 impl<'a> Serializer for Itune<'a> {
-    fn to_xml(&self, ch: Channel, resp: &Response) -> Result<String, Box<dyn Error>> {
+    fn to_xml(&self, ch: &Channel, resp: &Response) -> Result<String, Box<dyn Error>> {
         //ascii space 32
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), 32u8, 2);
         writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
@@ -136,7 +164,15 @@ impl<'a> Serializer for Itune<'a> {
         writer.write_event(Event::End(BytesEnd::borrowed(owner.as_bytes())))?;
 
         //item
-        resp.data.iter().zip(resp.included.iter());
+        let events = resp
+            .data
+            .iter()
+            .zip(resp.included.iter())
+            .flat_map(|(radio, media)| self.to_item(radio, media, ch))
+            .collect::<Vec<Event>>();
+        for ev in events {
+            writer.write_event(ev)?
+        }
 
         //end
         writer.write_event(Event::End(BytesEnd::borrowed(CHANNEL.as_bytes())))?;
@@ -165,13 +201,14 @@ mod tests {
             image: "http://www.example.com/podcast-icon.jpg",
             author: "John Doe",
             link: "http://example.com",
-            owner_name:"some owner",
-            owner_email:"some@eee.com",
+            owner_name: "some owner",
+            owner_email: "some@eee.com",
+            media_base_url: "https://example.com/media/",
             ..Default::default()
         };
         let json: String = fs::read_to_string("api_response.json")?;
         let response: Response = serde_json::from_str(&json)?;
-        let xml_str = itune.to_xml(ch, &response)?;
+        let xml_str = itune.to_xml(&ch, &response)?;
         println!("{}", xml_str);
         Ok(())
     }
