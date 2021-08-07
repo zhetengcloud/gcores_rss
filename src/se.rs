@@ -34,6 +34,7 @@ static URL: &str = "url";
 static DURATION: &str = "duration";
 static GUID: &str = "guid";
 static MPEG: (&str, &str) = ("type", "audio/mpeg");
+static PUBDATE: &str = "pubDate";
 
 impl<'a> Default for Itune<'a> {
     fn default() -> Self {
@@ -59,6 +60,8 @@ impl<'a> Itune<'a> {
         closure_ele.push_attribute((DURATION, media.attributes.duration.to_string().as_str()));
 
         let guid = GUID.as_bytes();
+        let description = DESCRIPTION.as_bytes();
+        let pub_date = PUBDATE.as_bytes();
 
         vec![
             Event::Start(BytesStart::borrowed(item, ITEM.len())),
@@ -68,7 +71,15 @@ impl<'a> Itune<'a> {
             Event::Start(BytesStart::borrowed(guid, guid.len())),
             Event::Text(BytesText::from_escaped_str(audio_url)),
             Event::End(BytesEnd::borrowed(guid)),
+            Event::Start(BytesStart::borrowed(description, description.len())),
+            Event::CData(BytesText::from_escaped_str(radio.attributes.desc.as_str())),
+            Event::End(BytesEnd::borrowed(description)),
             Event::Empty(closure_ele),
+            Event::Start(BytesStart::borrowed(pub_date, pub_date.len())),
+            Event::Text(BytesText::from_escaped_str(
+                radio.attributes.published_at.as_str(),
+            )),
+            Event::End(BytesEnd::borrowed(pub_date)),
             Event::End(BytesEnd::borrowed(item)),
         ]
     }
