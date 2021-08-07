@@ -25,6 +25,9 @@ static CATEGORY: &str = "language";
 static EXPLICIT: &str = "explicit";
 static AUTHOR: &str = "author";
 static LINK: &str = "link";
+static OWNER: &str = "owner";
+static NAME: &str = "name";
+static EMAIL: &str = "email";
 
 impl<'a> Default for Itune<'a> {
     fn default() -> Self {
@@ -113,6 +116,25 @@ impl<'a> Serializer for Itune<'a> {
         writer.write_event(Event::Text(BytesText::from_plain_str(ch.link)))?;
         writer.write_event(Event::End(BytesEnd::borrowed(link)))?;
 
+        //owner
+        let owner = format!("{}{}", self.prefix, OWNER);
+        let name = format!("{}{}", self.prefix, NAME);
+        let email = format!("{}{}", self.prefix, EMAIL);
+        writer.write_event(Event::Start(BytesStart::owned(
+            owner.as_bytes(),
+            owner.len(),
+        )))?;
+        writer.write_event(Event::Start(BytesStart::owned(name.as_bytes(), name.len())))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.owner_name)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(name.as_bytes())))?;
+        writer.write_event(Event::Start(BytesStart::owned(
+            email.as_bytes(),
+            email.len(),
+        )))?;
+        writer.write_event(Event::Text(BytesText::from_plain_str(ch.owner_email)))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(email.as_bytes())))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(owner.as_bytes())))?;
+
         //end
         writer.write_event(Event::End(BytesEnd::borrowed(CHANNEL.as_bytes())))?;
         writer.write_event(Event::End(BytesEnd::borrowed(RSS.as_bytes())))?;
@@ -140,6 +162,8 @@ mod tests {
             image: "http://www.example.com/podcast-icon.jpg",
             author: "John Doe",
             link: "http://example.com",
+            owner_name:"some owner",
+            owner_email:"some@eee.com",
             ..Default::default()
         };
         let json: String = fs::read_to_string("api_response.json")?;
