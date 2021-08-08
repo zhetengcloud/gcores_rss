@@ -39,6 +39,7 @@ pub mod api {
     }
 }
 
+#[derive(Default)]
 pub struct Channel<'a> {
     pub title: &'a str,
     pub author: &'a str,
@@ -52,23 +53,4 @@ pub struct Channel<'a> {
     pub owner_name: &'a str,
     pub owner_email: &'a str,
     pub media_base_url: &'a str,
-}
-
-impl<'a> Default for Channel<'a> {
-    fn default() -> Self {
-        Channel {
-            title: "",
-            author: "",
-            description: "",
-            image: "",
-            language: "zh-cn",
-            category1: "Leisure",
-            category2: "Video Game",
-            explicit: "true",
-            link: "",
-            owner_name: "",
-            owner_email: "",
-            media_base_url: "https://",
-        }
-    }
 }
