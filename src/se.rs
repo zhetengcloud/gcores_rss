@@ -8,7 +8,7 @@ trait Serializer {
 pub mod itune {
     use super::Serializer;
     use crate::model::{api::Response, Channel};
-    use quick_xml::events::{BytesStart, Event};
+    use quick_xml::events::{BytesText, Event};
     use quick_xml::{Reader, Writer};
     use std::error::Error;
     use std::io::Cursor;
@@ -17,8 +17,8 @@ pub mod itune {
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <channel>
-<title>Example Podpcast</title>
-<description>Description of podcast.</description>
+<title></title>
+<description></description>
 <itunes:image/>
 <language>en-us</language>
 <itunes:category>
@@ -52,6 +52,8 @@ pub mod itune {
     const IMAGE: &[u8] = b"itunes:image";
     const CATEGORY: &[u8] = b"itunes:category";
     const TEXT: &str = "text";
+    const TITLE: &[u8] = b"title";
+    const DESC: &[u8] = b"description";
 
     impl Serializer for Client {
         fn to_xml(&self, ch: &Channel, _resp: &Response) -> Result<String, Box<dyn Error>> {
@@ -62,6 +64,16 @@ pub mod itune {
             'xml: loop {
                 match root_reader.read_event(&mut buf) {
                     Ok(Event::Eof) => break 'xml,
+                    Ok(Event::Start(bt_st)) if bt_st.name() == TITLE => {
+                        root_writer.write_event(Event::Start(bt_st))?;
+                        root_writer
+                            .write_event(Event::Text(BytesText::from_plain_str(ch.title)))?;
+                    }
+                    Ok(Event::Start(bt_st)) if bt_st.name() == DESC => {
+                        root_writer.write_event(Event::Start(bt_st))?;
+                        root_writer
+                            .write_event(Event::CData(BytesText::from_escaped(ch.description.as_bytes())))?;
+                    }
                     Ok(Event::Empty(mut bt_st)) if bt_st.name() == IMAGE => {
                         bt_st.push_attribute(("href", ch.image));
                         root_writer.write_event(Event::Empty(bt_st))?;
@@ -101,7 +113,7 @@ pub mod itune {
             let itune = Client {};
             let ch = Channel {
                 title: "test podcast",
-                description: "some desc",
+                description: r#"<message> Welcome to My Channel #$@!<some desc"#,
                 image: "http://www.example.com/podcast-icon.jpg",
                 author: "John Doe",
                 link: "http://example.com",
