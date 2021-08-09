@@ -17,19 +17,19 @@ pub mod itune {
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <channel>
-<title></title>
-<description></description>
+<title>t1_title</title>
+<description>t1_desc</description>
 <itunes:image/>
-<language>en-us</language>
+<language>zh-cn</language>
 <itunes:category>
   <itunes:category/>
 </itunes:category>
-<itunes:explicit>false</itunes:explicit>
-<itunes:author>John Doe</itunes:author>
-<link>http://www.example.com/</link>
+<itunes:explicit>true</itunes:explicit>
+<itunes:author>t1_author</itunes:author>
+<link>t1_link</link>
 <itunes:owner>
-    <itunes:name>Owner Name</itunes:name>
-    <itunes:email>me@example.com</itunes:email>
+    <itunes:name>t1_owername</itunes:name>
+    <itunes:email>t1_owneremail</itunes:email>
 </itunes:owner>
 </channel>
 </rss>
@@ -52,8 +52,10 @@ pub mod itune {
     const IMAGE: &[u8] = b"itunes:image";
     const CATEGORY: &[u8] = b"itunes:category";
     const TEXT: &str = "text";
-    const TITLE: &[u8] = b"title";
-    const DESC: &[u8] = b"description";
+    const TITLE: &[u8] = b"t1_title";
+    const DESC: &[u8] = b"t1_desc";
+    const AUTHOR: &[u8] = b"t1_author";
+    const LINK: &[u8] = b"t1_link";
 
     impl Serializer for Client {
         fn to_xml(&self, ch: &Channel, _resp: &Response) -> Result<String, Box<dyn Error>> {
@@ -64,15 +66,20 @@ pub mod itune {
             'xml: loop {
                 match root_reader.read_event(&mut buf) {
                     Ok(Event::Eof) => break 'xml,
-                    Ok(Event::Start(bt_st)) if bt_st.name() == TITLE => {
-                        root_writer.write_event(Event::Start(bt_st))?;
-                        root_writer
-                            .write_event(Event::Text(BytesText::from_plain_str(ch.title)))?;
-                    }
-                    Ok(Event::Start(bt_st)) if bt_st.name() == DESC => {
-                        root_writer.write_event(Event::Start(bt_st))?;
-                        root_writer
-                            .write_event(Event::CData(BytesText::from_escaped(ch.description.as_bytes())))?;
+                    Ok(Event::Text(bt_text)) => {
+                        let vec_txt = bt_text.to_vec();
+                        match vec_txt.as_slice() {
+                            TITLE => root_writer
+                                .write_event(Event::Text(BytesText::from_plain_str(ch.title)))?,
+                            DESC => root_writer.write_event(Event::CData(
+                                BytesText::from_escaped_str(ch.description),
+                            ))?,
+                            AUTHOR => root_writer
+                                .write_event(Event::Text(BytesText::from_plain_str(ch.author)))?,
+                            LINK => root_writer
+                                .write_event(Event::Text(BytesText::from_plain_str(ch.link)))?,
+                            _ => (),
+                        }
                     }
                     Ok(Event::Empty(mut bt_st)) if bt_st.name() == IMAGE => {
                         bt_st.push_attribute(("href", ch.image));
@@ -84,7 +91,7 @@ pub mod itune {
                     }
                     Ok(Event::Start(mut bt_st)) if bt_st.name() == CATEGORY => {
                         bt_st.push_attribute((TEXT, ch.category1));
-                        root_writer.write_event(Event::Empty(bt_st))?;
+                        root_writer.write_event(Event::Start(bt_st))?;
                     }
                     Ok(e) => root_writer.write_event(e)?,
                     Err(e) => panic!(
