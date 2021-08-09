@@ -8,7 +8,7 @@ trait Serializer {
 pub mod itune {
     use super::Serializer;
     use crate::model::{api::Response, Channel};
-    use quick_xml::events::{BytesText, Event};
+    use quick_xml::events::{BytesStart, BytesText, Event};
     use quick_xml::{Reader, Writer};
     use std::error::Error;
     use std::io::Cursor;
@@ -17,19 +17,18 @@ pub mod itune {
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <channel>
-<title>t1_title</title>
-<description>t1_desc</description>
+<title></title>
+<description></description>
 <itunes:image/>
 <language>zh-cn</language>
 <itunes:category>
-  <itunes:category/>
 </itunes:category>
 <itunes:explicit>true</itunes:explicit>
-<itunes:author>t1_author</itunes:author>
-<link>t1_link</link>
+<itunes:author></itunes:author>
+<link></link>
 <itunes:owner>
-    <itunes:name>t1_owername</itunes:name>
-    <itunes:email>t1_owneremail</itunes:email>
+    <itunes:name></itunes:name>
+    <itunes:email></itunes:email>
 </itunes:owner>
 </channel>
 </rss>
@@ -38,13 +37,13 @@ pub mod itune {
     #[allow(dead_code)]
     const XML_ITEM: &str = r##"
 <item>
-    <title>Episode 1</title>
-    <enclosure url="http://example.com/podcast1.mp3" type="audio/mpeg" length="1024"/>
-    <guid>http://example.com/podcast1</guid>
-    <pubDate>Thu, 21 Dec 2016 11:00:00 +0000</pubDate>
-    <description>Description 1</description>
-    <itunes:duration>600</itunes:duration>
-    <link>http://example.com/podcast1</link>
+    <title></title>
+    <enclosure type="audio/mpeg"/>
+    <guid></guid>
+    <pubDate></pubDate>
+    <description></description>
+    <itunes:duration></itunes:duration>
+    <link></link>
 </item> 
     "##;
     pub struct Client {}
@@ -52,10 +51,12 @@ pub mod itune {
     const IMAGE: &[u8] = b"itunes:image";
     const CATEGORY: &[u8] = b"itunes:category";
     const TEXT: &str = "text";
-    const TITLE: &[u8] = b"t1_title";
-    const DESC: &[u8] = b"t1_desc";
-    const AUTHOR: &[u8] = b"t1_author";
-    const LINK: &[u8] = b"t1_link";
+    const TITLE: &[u8] = b"title";
+    const DESC: &[u8] = b"description";
+    const AUTHOR: &[u8] = b"itunes:author";
+    const LINK: &[u8] = b"link";
+    const OWNER_NAME: &[u8] = b"itunes:name";
+    const OWNER_EMAIL: &[u8] = b"itunes:email";
 
     impl Serializer for Client {
         fn to_xml(&self, ch: &Channel, _resp: &Response) -> Result<String, Box<dyn Error>> {
@@ -64,41 +65,45 @@ pub mod itune {
             let mut root_writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
             let mut buf = Vec::new();
             'xml: loop {
-                match root_reader.read_event(&mut buf) {
+                let events: Vec<Event> = match root_reader.read_event(&mut buf) {
                     Ok(Event::Eof) => break 'xml,
-                    Ok(Event::Text(bt_text)) => {
-                        let vec_txt = bt_text.to_vec();
-                        match vec_txt.as_slice() {
-                            TITLE => root_writer
-                                .write_event(Event::Text(BytesText::from_plain_str(ch.title)))?,
-                            DESC => root_writer.write_event(Event::CData(
-                                BytesText::from_escaped_str(ch.description),
-                            ))?,
-                            AUTHOR => root_writer
-                                .write_event(Event::Text(BytesText::from_plain_str(ch.author)))?,
-                            LINK => root_writer
-                                .write_event(Event::Text(BytesText::from_plain_str(ch.link)))?,
-                            _ => (),
-                        }
+                    Ok(Event::Start(mut bt_st)) if bt_st.name() == CATEGORY => {
+                        bt_st.push_attribute((TEXT, ch.category1));
+                        let mut cat2 = BytesStart::borrowed_name(CATEGORY);
+                        cat2.push_attribute((TEXT, ch.category2));
+                        vec![Event::Start(bt_st), Event::Empty(cat2)]
+                    }
+                    Ok(Event::Start(bt_st)) if bt_st.name() == DESC => {
+                        vec![
+                            Event::Start(bt_st),
+                            Event::CData(BytesText::from_escaped_str(ch.description)),
+                        ]
+                    }
+                    Ok(Event::Start(bt_st)) => {
+                        let plain_txt = match bt_st.name() {
+                            TITLE => ch.title,
+                            AUTHOR => ch.author,
+                            LINK => ch.link,
+                            _ => "",
+                        };
+                        vec![
+                            Event::Start(bt_st),
+                            Event::Text(BytesText::from_plain_str(plain_txt)),
+                        ]
                     }
                     Ok(Event::Empty(mut bt_st)) if bt_st.name() == IMAGE => {
                         bt_st.push_attribute(("href", ch.image));
-                        root_writer.write_event(Event::Empty(bt_st))?;
+                        vec![Event::Empty(bt_st)]
                     }
-                    Ok(Event::Empty(mut bt_st)) if bt_st.name() == CATEGORY => {
-                        bt_st.push_attribute((TEXT, ch.category2));
-                        root_writer.write_event(Event::Empty(bt_st))?;
-                    }
-                    Ok(Event::Start(mut bt_st)) if bt_st.name() == CATEGORY => {
-                        bt_st.push_attribute((TEXT, ch.category1));
-                        root_writer.write_event(Event::Start(bt_st))?;
-                    }
-                    Ok(e) => root_writer.write_event(e)?,
+                    Ok(e) => vec![e],
                     Err(e) => panic!(
                         "Error at position {}: {:?}",
                         root_reader.buffer_position(),
                         e
                     ),
+                };
+                for ev in events {
+                    root_writer.write_event(ev)?;
                 }
                 buf.clear();
             }
