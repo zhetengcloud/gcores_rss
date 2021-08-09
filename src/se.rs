@@ -8,7 +8,7 @@ trait Serializer {
 pub mod itune {
     use super::Serializer;
     use crate::model::{api::Response, Channel};
-    use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
+    use quick_xml::events::{BytesStart, Event};
     use quick_xml::{Reader, Writer};
     use std::error::Error;
     use std::io::Cursor;
@@ -19,10 +19,10 @@ pub mod itune {
 <channel>
 <title>Example Podpcast</title>
 <description>Description of podcast.</description>
-<itunes:image href="http://www.example.com/podcast-icon.jpg" />
+<itunes:image/>
 <language>en-us</language>
-<itunes:category text="Sports">
-  <itunes:category text="Wilderness"/>
+<itunes:category>
+  <itunes:category/>
 </itunes:category>
 <itunes:explicit>false</itunes:explicit>
 <itunes:author>John Doe</itunes:author>
@@ -33,9 +33,9 @@ pub mod itune {
 </itunes:owner>
 </channel>
 </rss>
+"##;
 
-    "##;
-
+    #[allow(dead_code)]
     const XML_ITEM: &str = r##"
 <item>
     <title>Episode 1</title>
@@ -49,22 +49,43 @@ pub mod itune {
     "##;
     pub struct Client {}
 
+    const IMAGE: &[u8] = b"itunes:image";
+    const CATEGORY: &[u8] = b"itunes:category";
+    const TEXT: &str = "text";
+
     impl Serializer for Client {
-        fn to_xml(&self, ch: &Channel, resp: &Response) -> Result<String, Box<dyn Error>> {
+        fn to_xml(&self, ch: &Channel, _resp: &Response) -> Result<String, Box<dyn Error>> {
             let mut root_reader = Reader::from_str(XML_RSS);
             root_reader.trim_text(true);
-            let mut root_writer = Writer::new(Cursor::new(Vec::new()));
+            let mut root_writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
             let mut buf = Vec::new();
             'xml: loop {
-                match root_reader.read_event(&mut buf){
+                match root_reader.read_event(&mut buf) {
                     Ok(Event::Eof) => break 'xml,
+                    Ok(Event::Empty(mut bt_st)) if bt_st.name() == IMAGE => {
+                        bt_st.push_attribute(("href", ch.image));
+                        root_writer.write_event(Event::Empty(bt_st))?;
+                    }
+                    Ok(Event::Empty(mut bt_st)) if bt_st.name() == CATEGORY => {
+                        bt_st.push_attribute((TEXT, ch.category2));
+                        root_writer.write_event(Event::Empty(bt_st))?;
+                    }
+                    Ok(Event::Start(mut bt_st)) if bt_st.name() == CATEGORY => {
+                        bt_st.push_attribute((TEXT, ch.category1));
+                        root_writer.write_event(Event::Empty(bt_st))?;
+                    }
                     Ok(e) => root_writer.write_event(e)?,
-                    Err(e) => panic!("Error at position {}: {:?}", root_reader.buffer_position(), e),
+                    Err(e) => panic!(
+                        "Error at position {}: {:?}",
+                        root_reader.buffer_position(),
+                        e
+                    ),
                 }
                 buf.clear();
             }
 
-            Ok(String::from_utf8(buf)?)
+            let result: Vec<u8> = root_writer.into_inner().into_inner();
+            Ok(String::from_utf8(result)?)
         }
     }
 
@@ -87,6 +108,8 @@ pub mod itune {
                 owner_name: "some owner",
                 owner_email: "some@eee.com",
                 media_base_url: "https://example.com/media/",
+                category1: "Leisure",
+                category2: "Video Game",
                 ..Default::default()
             };
             let json: String = std::fs::read_to_string("api_response.json")?;
