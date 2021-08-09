@@ -11,7 +11,7 @@
 </itunes:category>
 <itunes:explicit>false</itunes:explicit>
 <itunes:author>John Doe</itunes:author>
-<link>http://www.example.com/<link>
+<link>http://www.example.com/</link>
 <itunes:owner>
     <itunes:name>Owner Name</itunes:name>
     <itunes:email>me@example.com</itunes:email>
