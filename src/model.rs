@@ -48,9 +48,10 @@ pub struct Channel<'a> {
     pub language: &'a str,
     pub category1: &'a str,
     pub category2: &'a str,
-    pub explicit: &'a str,
+    pub explicit: bool,
     pub link: &'a str,
     pub owner_name: &'a str,
     pub owner_email: &'a str,
     pub media_base_url: &'a str,
+    pub web_base_url: &'a str,
 }
