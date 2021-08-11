@@ -56,6 +56,7 @@ pub mod req {
 
     pub struct Client {}
 
+    #[derive(Debug, Clone)]
     pub struct Param {
         url: String,
         start: u16,

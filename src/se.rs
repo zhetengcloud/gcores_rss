@@ -2,7 +2,7 @@ use crate::model::api::Response;
 use crate::model::Channel;
 use std::error::Error;
 
-trait Serializer {
+pub trait Serializer {
     fn to_xml(&self, ch: &Channel, resp: &Response) -> Result<String, Box<dyn Error>>;
 }
 
