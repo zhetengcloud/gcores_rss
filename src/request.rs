@@ -52,24 +52,24 @@ pub mod req {
     use super::url::concat_url;
     use crate::model::api;
     use simple_error::SimpleError;
+    use std::error::Error;
 
-    pub struct Client {
+    pub struct Client {}
+
+    pub struct Param {
         url: String,
         start: u16,
         size: u16,
     }
 
     impl Client {
-        pub async fn fetch(&self) -> Result<api::Response, SimpleError> {
-            let url1 = concat_url(self.url.clone(), self.start, self.size)
+        pub async fn fetch(&self, param: Param) -> Result<api::Response, Box<dyn Error>> {
+            let url1 = concat_url(param.url.clone(), param.start, param.size)
                 .ok_or_else(|| SimpleError::new("url error"))?;
 
-            reqwest::get(url1)
-                .await
-                .map_err(|_| SimpleError::new("response error"))?
-                .json::<api::Response>()
-                .await
-                .map_err(|_| SimpleError::new("json error"))
+            let resp = reqwest::get(url1).await?.json::<api::Response>().await?;
+
+            Ok(resp)
         }
     }
 
