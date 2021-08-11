@@ -76,17 +76,18 @@ pub mod req {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use simple_error::SimpleError;
+        use std::error::Error;
 
         #[tokio::test]
-        async fn get_json() -> Result<(), SimpleError> {
+        async fn get_json() -> Result<(), Box<dyn Error>> {
             let url1 = "https://www.gcores.com/gapi/v1/radios";
-            let cl = Client {
+            let param = Param {
                 url: url1.to_owned(),
                 start: 3u16,
                 size: 4u16,
             };
-            let resp = cl.fetch().await?;
+            let cl = Client {};
+            let resp = cl.fetch(param).await?;
             for radio in resp.data {
                 println!("{}", radio.attributes.title);
                 println!("{}", radio.attributes.published_at);
