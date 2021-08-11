@@ -5,6 +5,32 @@ pub trait Serializer {
     fn to_xml(&self, resp: &Response) -> Result<String, Box<dyn Error>>;
 }
 
+pub(crate) mod util {
+    use quick_xml::events::Event;
+    use quick_xml::Reader;
+    use quick_xml::Writer;
+    use std::error::Error;
+    use std::io::Cursor;
+
+    pub(crate) fn format_xml(xml: &str) -> Result<String, Box<dyn Error>> {
+        let mut reader = Reader::from_str(xml);
+        reader.trim_text(true);
+        let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
+        let mut buf = Vec::new();
+        loop {
+            match reader.read_event(&mut buf) {
+                Ok(Event::Eof) => break,
+                Ok(e) => assert!(writer.write_event(&e).is_ok()),
+                Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            }
+            buf.clear();
+        }
+
+        let result = writer.into_inner().into_inner();
+        Ok(String::from_utf8(result)?)
+    }
+}
+
 pub mod itunes {
     use super::Serializer;
     use crate::model;
@@ -98,6 +124,7 @@ pub mod itunes {
         use serde::Serialize;
 
         #[derive(Serialize, PartialEq, Debug)]
+        #[serde(rename_all = "lowercase")]
         pub struct Rss {
             pub version: String,
             #[serde(rename = "xmlns:itunes")]
@@ -180,6 +207,7 @@ pub mod itunes {
     mod tests {
         use super::Client;
         use crate::model::{api::Response, Channel};
+        use crate::se::util;
         use crate::se::Serializer;
         use std::error::Error;
 
@@ -208,7 +236,8 @@ pub mod itunes {
             let resp: Response = serde_json::from_str(&resp_str)?;
             let client = Client { ch: &make_ch() };
             let rss_str = client.to_xml(&resp)?;
-            println!("{}", rss_str);
+            println!("{}", util::format_xml(&rss_str)?);
+
             Ok(())
         }
     }
