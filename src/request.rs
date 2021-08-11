@@ -58,9 +58,9 @@ pub mod req {
 
     #[derive(Debug, Clone)]
     pub struct Param {
-        url: String,
-        start: u16,
-        size: u16,
+        pub url: String,
+        pub start: u16,
+        pub size: u16,
     }
 
     impl Client {
