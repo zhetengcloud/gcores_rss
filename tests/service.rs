@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use gcores_rss::{get, model::Channel, request::req};
+    use gcores_rss::{get, Channel, Param};
 
     #[tokio::test]
     async fn test_get() {
@@ -20,7 +20,7 @@ mod tests {
             web_base_url: "http::/exm.com/pages/",
             ..Default::default()
         };
-        let fetch_param = req::Param {
+        let fetch_param = Param {
             url: "https://www.gcores.com/gapi/v1/radios".to_owned(),
             start: 0u16,
             size: 3u16,

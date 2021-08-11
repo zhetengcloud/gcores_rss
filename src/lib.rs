@@ -1,6 +1,8 @@
-pub mod model;
-pub mod request;
-pub mod se;
+mod model;
+mod request;
+mod se;
+pub use model::Channel;
+pub use request::req::Param;
 pub use service::get;
 
 mod service {
