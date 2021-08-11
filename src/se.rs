@@ -127,7 +127,7 @@ pub mod itune {
                 TITLE.as_bytes(),
                 TITLE.len(),
             )))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.title)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.title)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(TITLE.as_bytes())))?;
 
             //description
@@ -135,7 +135,7 @@ pub mod itune {
                 DESCRIPTION.as_bytes(),
                 DESCRIPTION.len(),
             )))?;
-            writer.write_event(Event::CData(BytesText::from_plain_str(ch.description)))?;
+            writer.write_event(Event::CData(BytesText::from_plain_str(&ch.description)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(DESCRIPTION.as_bytes())))?;
 
             //language
@@ -143,7 +143,7 @@ pub mod itune {
                 LANGUAGE.as_bytes(),
                 LANGUAGE.len(),
             )))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.language)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.language)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(LANGUAGE.as_bytes())))?;
 
             //category
@@ -151,11 +151,11 @@ pub mod itune {
             let arr: &[u8] = cat_str.as_bytes();
             let arr_len = arr.len();
             let mut cat1 = BytesStart::owned(arr, arr_len);
-            cat1.push_attribute((TEXT, ch.category1));
+            cat1.push_attribute((TEXT, ch.category1.as_ref()));
             writer.write_event(Event::Start(cat1))?;
 
             let mut cat2 = BytesStart::owned(arr, arr_len);
-            cat2.push_attribute((TEXT, ch.category2));
+            cat2.push_attribute((TEXT, ch.category2.as_ref()));
             writer.write_event(Event::Empty(cat2))?;
             writer.write_event(Event::End(BytesEnd::borrowed(arr)))?;
 
@@ -164,7 +164,7 @@ pub mod itune {
                 EXPLICIT.as_bytes(),
                 EXPLICIT.len(),
             )))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.explicit)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.explicit)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(EXPLICIT.as_bytes())))?;
 
             //author
@@ -172,13 +172,13 @@ pub mod itune {
             let aut_arr = aut_tag.as_bytes();
             let len_aut = aut_arr.len();
             writer.write_event(Event::Start(BytesStart::owned(aut_arr, len_aut)))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.author)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.author)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(aut_arr)))?;
 
             //link
             let link = LINK.as_bytes();
             writer.write_event(Event::Start(BytesStart::owned(link, LINK.len())))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.link)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.link)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(link)))?;
 
             //owner
@@ -190,13 +190,13 @@ pub mod itune {
                 owner.len(),
             )))?;
             writer.write_event(Event::Start(BytesStart::owned(name.as_bytes(), name.len())))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.owner_name)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.owner_name)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(name.as_bytes())))?;
             writer.write_event(Event::Start(BytesStart::owned(
                 email.as_bytes(),
                 email.len(),
             )))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(ch.owner_email)))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.owner_email)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(email.as_bytes())))?;
             writer.write_event(Event::End(BytesEnd::borrowed(owner.as_bytes())))?;
 
@@ -230,19 +230,19 @@ pub mod itune {
         fn se_xml() -> Result<(), Box<dyn Error>> {
             let itune = Client::default();
             let ch = Channel {
-                title: "test podcast",
-                description: "some desc",
-                image: "http://www.example.com/podcast-icon.jpg",
-                author: "John Doe",
-                link: "http://example.com",
-                owner_name: "some owner",
-                owner_email: "some@eee.com",
-                media_base_url: "https://example.com/media/",
-                explicit: "true",
-                language: "test language",
-                category1: "Travel",
-                category2: "cook",
-                web_base_url: "http::/exm.com/pages/",
+                title: "test podcast".to_string(),
+                description: "some desc".to_string(),
+                image: "http://www.example.com/podcast-icon.jpg".to_string(),
+                author: "John Doe".to_string(),
+                link: "http://example.com".to_string(),
+                owner_name: "some owner".to_string(),
+                owner_email: "some@eee.com".to_string(),
+                media_base_url: "https://example.com/media/".to_string(),
+                explicit: "true".to_string(),
+                language: "test language".to_string(),
+                category1: "Travel".to_string(),
+                category2: "cook".to_string(),
+                web_base_url: "http::/exm.com/pages/".to_string(),
                 ..Default::default()
             };
             let json: String = fs::read_to_string("api_response.json")?;

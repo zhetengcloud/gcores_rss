@@ -39,19 +39,19 @@ pub mod api {
     }
 }
 
-#[derive(Default)]
-pub struct Channel<'a> {
-    pub title: &'a str,
-    pub author: &'a str,
-    pub description: &'a str,
-    pub image: &'a str,
-    pub language: &'a str,
-    pub category1: &'a str,
-    pub category2: &'a str,
-    pub link: &'a str,
-    pub owner_name: &'a str,
-    pub owner_email: &'a str,
-    pub media_base_url: &'a str,
-    pub web_base_url: &'a str,
-    pub explicit: &'a str,
+#[derive(Default, serde::Deserialize)]
+pub struct Channel {
+    pub title: String,
+    pub author: String,
+    pub description: String,
+    pub image: String,
+    pub language: String,
+    pub category1: String,
+    pub category2: String,
+    pub link: String,
+    pub owner_name: String,
+    pub owner_email: String,
+    pub media_base_url: String,
+    pub web_base_url: String,
+    pub explicit: String,
 }

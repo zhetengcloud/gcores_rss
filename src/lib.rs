@@ -11,9 +11,9 @@ mod service {
     use crate::se::{itune, Serializer};
     use std::error::Error;
 
-    pub async fn get<'a>(
+    pub async fn get(
         param: req::Param,
-        ch_info: Channel<'a>,
+        ch_info: Channel,
     ) -> Result<String, Box<dyn Error>> {
         let fetch_client = req::Client {};
         let resp = fetch_client.fetch(param).await?;

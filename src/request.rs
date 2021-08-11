@@ -56,7 +56,7 @@ pub mod req {
 
     pub struct Client {}
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, serde::Deserialize)]
     pub struct Param {
         pub url: String,
         pub start: u16,
