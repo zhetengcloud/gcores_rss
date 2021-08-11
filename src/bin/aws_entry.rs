@@ -37,10 +37,11 @@ pub(crate) async fn fetch_save(event: Request, ctx: Context) -> Result<Response,
         param,
         channel,
     } = event;
-    let xml_str: String = get(param, channel).await?;
-    log::info!("{}", xml_str);
-    Ok(Response {
-        req_id: ctx.request_id,
-        msg: xml_str,
-    })
+    get(param, channel)
+        .await
+        .map(|xml| Response {
+            req_id: ctx.request_id,
+            msg: xml,
+        })
+        .map_err(|e| SimpleError::new(e.to_string()))
 }
