@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use gcores_rss::{get, model::Channel, request::req, Param};
+    use gcores_rss::{get, model::Channel, request::req};
 
     #[tokio::test]
     async fn test_get() {
@@ -25,12 +25,8 @@ mod tests {
             start: 0u16,
             size: 3u16,
         };
-        let param = Param {
-            fetch_param,
-            ch_info,
-        };
 
-        let xml_str = get(&param).await.expect("get xml error");
+        let xml_str = get(fetch_param, ch_info).await.expect("get xml error");
         println!("{}", xml_str);
     }
 }
