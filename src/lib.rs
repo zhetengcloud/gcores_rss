@@ -13,7 +13,7 @@ mod service {
 
     pub async fn get(param: req::Param, ch_info: Channel) -> Result<String, Box<dyn Error>> {
         let fetch_client = req::Client {};
-        let resp = fetch_client.fetch(param).await?;
+        let resp = fetch_client.fetch(param)?;
         let serializer = itune::Client::default();
         let xml_str = serializer.to_xml(&ch_info, &resp)?;
         Ok(xml_str)

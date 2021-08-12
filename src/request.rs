@@ -51,6 +51,7 @@ mod url {
 pub mod req {
     use super::url::concat_url;
     use crate::model::api;
+    use curl::easy::Easy;
     use simple_error::SimpleError;
     use std::error::Error;
 
@@ -64,11 +65,26 @@ pub mod req {
     }
 
     impl Client {
-        pub async fn fetch(&self, param: Param) -> Result<api::Response, Box<dyn Error>> {
+        pub fn fetch(&self, param: Param) -> Result<api::Response, Box<dyn Error>> {
             let url1 = concat_url(param.url.clone(), param.start, param.size)
                 .ok_or_else(|| SimpleError::new("url error"))?;
 
-            let resp = reqwest::get(url1).await?.json::<api::Response>().await?;
+            let mut buf: Vec<u8> = Vec::new();
+            let mut easy = Easy::new();
+            easy.url(&url1).unwrap();
+
+            {
+                let mut transfer = easy.transfer();
+                transfer
+                    .write_function(|data| {
+                        buf.extend_from_slice(data);
+                        Ok(data.len())
+                    })
+                    .unwrap();
+                transfer.perform().unwrap();
+            }
+
+            let resp: api::Response = serde_json::from_slice(&buf)?;
 
             Ok(resp)
         }
@@ -79,8 +95,8 @@ pub mod req {
         use super::*;
         use std::error::Error;
 
-        #[tokio::test]
-        async fn get_json() -> Result<(), Box<dyn Error>> {
+        #[test]
+        fn get_json() -> Result<(), Box<dyn Error>> {
             let url1 = "https://www.gcores.com/gapi/v1/radios";
             let param = Param {
                 url: url1.to_owned(),
@@ -88,7 +104,7 @@ pub mod req {
                 size: 4u16,
             };
             let cl = Client {};
-            let resp = cl.fetch(param).await?;
+            let resp = cl.fetch(param)?;
             for radio in resp.data {
                 println!("{}", radio.attributes.title);
                 println!("{}", radio.attributes.published_at);
