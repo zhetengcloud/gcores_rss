@@ -11,10 +11,7 @@ mod service {
     use crate::se::{itune, Serializer};
     use std::error::Error;
 
-    pub async fn get(
-        param: req::Param,
-        ch_info: Channel,
-    ) -> Result<String, Box<dyn Error>> {
+    pub async fn get(param: req::Param, ch_info: Channel) -> Result<String, Box<dyn Error>> {
         let fetch_client = req::Client {};
         let resp = fetch_client.fetch(param).await?;
         let serializer = itune::Client::default();

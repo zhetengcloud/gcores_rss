@@ -1,9 +1,12 @@
 use gcores_rss::{get, Channel, Param};
 use lambda_runtime::{handler_fn, Context, Error};
 use log::LevelFilter;
+use rusoto_core::{ByteStream, Region};
+use rusoto_s3::{PutObjectRequest, S3Client, S3};
 use serde::{Deserialize, Serialize};
 use simple_error::SimpleError;
 use simple_logger::SimpleLogger;
+use std::error::Error as SError;
 
 #[derive(Deserialize)]
 struct Request {
@@ -39,9 +42,24 @@ pub(crate) async fn fetch_save(event: Request, ctx: Context) -> Result<Response,
     } = event;
     get(param, channel)
         .await
-        .map(|xml| Response {
+        .iter()
+        .try_for_each(|xml| save_to_s3(bucket.clone().to_string(), key.clone(), xml.to_string()))
+        .map(|_| Response {
+            msg: "xml saved".to_owned(),
             req_id: ctx.request_id,
-            msg: xml,
         })
         .map_err(|e| SimpleError::new(e.to_string()))
+}
+
+fn save_to_s3(bucket: String, key: String, val: String) -> Result<(), Box<dyn SError>> {
+    S3Client::new(Region::UsEast1)
+        .put_object(PutObjectRequest {
+            acl: Some("public_read".to_string()),
+            body: Some(ByteStream::from(val.into_bytes())),
+            bucket,
+            key,
+            ..Default::default()
+        })
+        .sync()?;
+    Ok(())
 }
