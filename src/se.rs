@@ -45,6 +45,7 @@ pub mod itune {
     const PUBDATE: &str = "pubDate";
     const TEXT: &str = "text";
     const IMAGE: &str = "image";
+    const HREF: &str = "href";
 
     impl<'a> Default for Client<'a> {
         fn default() -> Self {
@@ -134,9 +135,9 @@ pub mod itune {
             //image
             let itune_image = format!("{}{}", self.prefix, IMAGE);
             let image: &[u8] = itune_image.as_bytes();
-            writer.write_event(Event::Start(BytesStart::owned(image, image.len())))?;
-            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.image)))?;
-            writer.write_event(Event::End(BytesEnd::borrowed(TITLE.as_bytes())))?;
+            let mut image_tag = BytesStart::owned(image, image.len());
+            image_tag.push_attribute((HREF, ch.image.as_ref()));
+            writer.write_event(Event::Empty(image_tag))?;
 
             //description
             writer.write_event(Event::Start(BytesStart::owned(
