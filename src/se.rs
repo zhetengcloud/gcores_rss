@@ -44,6 +44,7 @@ pub mod itune {
     const MPEG: (&str, &str) = ("type", "audio/mpeg");
     const PUBDATE: &str = "pubDate";
     const TEXT: &str = "text";
+    const IMAGE: &str = "image";
 
     impl<'a> Default for Client<'a> {
         fn default() -> Self {
@@ -130,6 +131,13 @@ pub mod itune {
             writer.write_event(Event::Text(BytesText::from_plain_str(&ch.title)))?;
             writer.write_event(Event::End(BytesEnd::borrowed(TITLE.as_bytes())))?;
 
+            //image
+            let itune_image = format!("{}{}", self.prefix, IMAGE);
+            let image: &[u8] = itune_image.as_bytes();
+            writer.write_event(Event::Start(BytesStart::owned(image, image.len())))?;
+            writer.write_event(Event::Text(BytesText::from_plain_str(&ch.image)))?;
+            writer.write_event(Event::End(BytesEnd::borrowed(TITLE.as_bytes())))?;
+
             //description
             writer.write_event(Event::Start(BytesStart::owned(
                 DESCRIPTION.as_bytes(),
@@ -160,12 +168,11 @@ pub mod itune {
             writer.write_event(Event::End(BytesEnd::borrowed(arr)))?;
 
             //explicit
-            writer.write_event(Event::Start(BytesStart::owned(
-                EXPLICIT.as_bytes(),
-                EXPLICIT.len(),
-            )))?;
+            let itune_explicit = format!("{}{}", self.prefix, EXPLICIT);
+            let explicit = itune_explicit.as_bytes();
+            writer.write_event(Event::Start(BytesStart::owned(explicit, explicit.len())))?;
             writer.write_event(Event::Text(BytesText::from_plain_str(&ch.explicit)))?;
-            writer.write_event(Event::End(BytesEnd::borrowed(EXPLICIT.as_bytes())))?;
+            writer.write_event(Event::End(BytesEnd::borrowed(explicit)))?;
 
             //author
             let aut_tag = format!("{}{}", self.prefix, AUTHOR);
