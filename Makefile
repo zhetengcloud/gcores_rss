@@ -1,28 +1,33 @@
-func := $(lambda_name)
+.PHONY: clean upload invoke log ali
 
-tgmusl = x86_64-unknown-linux-musl
-rldir = target/$(tgmusl)/release
+.SECONDARY:
+
+aws_fn := $(aws_fn)
+ali_fn := $(ali_fn)
+
+tg_musl = x86_64-unknown-linux-musl
+rl_dir = target/$(tg_musl)/release
+
 aws_ent = aws_entry
-entrs = src/bin/$(aws_ent).rs
-ent1 = $(rldir)/$(aws_ent)
-outdir = dist
-bsp := $(outdir)/bootstrap
-azp := $(outdir)/app.zip
-out1 := $(outdir)/out1.json
-log1 := $(outdir)/log1
+ali_ent = aliyun_entry
+
+dist = dist
+
+azp := $(dist)/app.zip
+out1 := $(dist)/out1.json
+log1 := $(dist)/log1
 exm := event-example.json
 
 
-$(ent1): $(entrs) src/*.rs
-	cargo build --release --bin $(@F) --target $(tgmusl)
+$(rl_dir)/%: src/bin/**.rs
+	cargo build --release --bin $(@F) --target $(tg_musl)
 
-$(bsp): $(ent1)
+$(dist)/%: $(rl_dir)/%
 	cp $< $@
 
-$(azp): $(bsp)
-	zip -j $@ $<
+ali_zip: $(dist)/$(ali_ent)
 
-.PHONY: clean upload invoke log
+
 
 upload: $(azp)
 	aws lambda update-function-code --function-name $(func) --zip-file fileb://$(azp)
