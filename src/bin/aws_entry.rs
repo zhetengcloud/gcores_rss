@@ -20,6 +20,7 @@ struct S3Param {
     bucket: String,
     key: String,
     acl: Option<String>,
+    content_type: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -56,13 +57,14 @@ pub(crate) async fn fetch_save(event: Request, ctx: Context) -> Result<Response,
 }
 
 fn save_to_s3(param: S3Param, val: String) -> Result<(), Box<dyn SError>> {
-    let S3Param { acl, bucket, key } = param;
+    let S3Param { acl, bucket, key,content_type } = param;
     S3Client::new(Region::UsEast1)
         .put_object(PutObjectRequest {
             acl,
             body: Some(ByteStream::from(val.into_bytes())),
             bucket,
             key,
+            content_type,
             ..Default::default()
         })
         .sync()?;

@@ -22,6 +22,7 @@
   "s3_param": {
     "bucket": "sls12",
     "key": "rss.xml",
-    "acl": "public-read"
+    "acl": "public-read",
+    "content_type":"application/xml"
   }
 }

@@ -37,7 +37,7 @@ pub mod itune {
     const NAME: &str = "name";
     const EMAIL: &str = "email";
     const ITEM: &str = "item";
-    const CLOSURE: &str = "closure";
+    const CLOSURE: &str = "enclosure";
     const URL: &str = "url";
     const DURATION: &str = "duration";
     const GUID: &str = "guid";
