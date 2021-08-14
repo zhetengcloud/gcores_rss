@@ -1,4 +1,4 @@
-.PHONY: clean upload_aws invoke log_aws aliyun aws
+.PHONY: clean upload_aws upload_ali invoke log_aws aliyun aws
 
 .SECONDARY:
 
@@ -6,6 +6,7 @@ dests = aliyun aws
 
 aws_fn := $(aws_fn)
 ali_fn := $(ali_fn)
+ali_service := $(ali_service)
 
 tg_musl = x86_64-unknown-linux-musl
 rl_dir = target/$(tg_musl)/release
@@ -38,6 +39,12 @@ invoke_aws:
 log_aws:
 	grep -oE '\S{20,}' $(aws_log)| base64 -d
 	cat $(aws_out)
+
+upload_ali: $(dist)/aliyun/app.zip
+	fcli function update --code-file $< -f $(ali_fn) -s $(ali_service)
+
+invoke_ali:
+	fcli function invoke -f $(ali_fn) -s $(ali_service)
 
 clean:
 	cargo clean
