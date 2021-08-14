@@ -1,4 +1,4 @@
-.PHONY: clean upload invoke log distdir aliyun aws
+.PHONY: clean upload invoke log aliyun aws
 
 .SECONDARY:
 
@@ -14,13 +14,11 @@ dist = dist
 
 exm := event-example.json
 
-distdir:
-	mkdir -p $(dist)/{aliyun,aws}
-
 $(rl_dir)/%: src/**.rs
 	cargo build --release --bin $(@F) --target $(tg_musl)
 
 $(dist)/%/bootstrap: $(rl_dir)/%_entry
+	mkdir -p $(@D)
 	cp $< $@
 
 $(dist)/%/app.zip: $(dist)/%/bootstrap
