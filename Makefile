@@ -1,4 +1,4 @@
-.PHONY: clean upload invoke log aliyun aws
+.PHONY: clean upload_aws invoke log_aws aliyun aws
 
 .SECONDARY:
 
@@ -11,7 +11,8 @@ tg_musl = x86_64-unknown-linux-musl
 rl_dir = target/$(tg_musl)/release
 
 dist = dist
-
+aws_out := $(dist)/aws_out
+aws_log := $(dist)/aws_log
 exm := event-example.json
 
 $(rl_dir)/%: src/**.rs
@@ -26,17 +27,17 @@ $(dist)/%/app.zip: $(dist)/%/bootstrap
 
 $(dests): %: $(dist)/%/app.zip
 
-upload: $(azp)
-	aws lambda update-function-code --function-name $(func) --zip-file fileb://$(azp)
+upload_aws: $(dist)/aws/app.zip
+	aws lambda update-function-code --function-name $(aws_fn) --zip-file fileb://$<
 
-invoke:
-	aws lambda invoke --function-name $(func) $(out1) \
+invoke_aws:
+	aws lambda invoke --function-name $(aws_fn) $(aws_out) \
 	--output text --payload fileb://$(exm) \
-	--log-type Tail > $(log1)
+	--log-type Tail > $(aws_log)
 
-log:
-	grep -oE '\S{20,}' $(log1)| base64 -d
-	cat $(out1)
+log_aws:
+	grep -oE '\S{20,}' $(aws_log)| base64 -d
+	cat $(aws_out)
 
 clean:
 	cargo clean
