@@ -14,6 +14,9 @@ dist = dist
 
 exm := event-example.json
 
+distdir:
+	mkdir -p $(dist)/{aliyun,aws}
+
 $(rl_dir)/%: src/**.rs
 	cargo build --release --bin $(@F) --target $(tg_musl)
 
