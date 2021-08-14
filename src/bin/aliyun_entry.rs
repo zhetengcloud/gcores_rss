@@ -13,20 +13,18 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let mut buffer = [0; 1024];
+    let mut buffer = [0; 1024 * 4];
     stream.read(&mut buffer).unwrap();
 
-    let req = String::from_utf8(buffer.to_vec()).unwrap();
+    let contents = buffer
+        .iter()
+        .skip_while(|&&x| x != b'{')
+        .map(|&x| x)
+        .collect::<Vec<u8>>();
 
-    println!("{}", req);
+    let body = String::from_utf8(contents).unwrap_or("body string error".to_string());
 
-    let contents = "ni mei";
-
-    let response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-        contents.len(),
-        contents
-    );
+    let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", body);
 
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
