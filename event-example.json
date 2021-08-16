@@ -19,7 +19,8 @@
     "start": 0,
     "size": 5
   },
-  "s3_param": {
+  "storage_param": {
+    "service": "podcast",
     "bucket": "sls12",
     "key": "rss.xml",
     "acl": "public-read",

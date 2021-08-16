@@ -10,6 +10,7 @@ use std::error::Error as SError;
 
 #[derive(Deserialize)]
 struct Request {
+    #[serde(rename="storage_param")]
     s3_param: S3Param,
     channel: Channel,
     param: Param,

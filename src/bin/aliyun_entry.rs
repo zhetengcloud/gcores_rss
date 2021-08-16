@@ -1,6 +1,4 @@
-use std::io::prelude::*;
 use std::net::TcpListener;
-use std::net::TcpStream;
 
 fn main() {
     let listener = TcpListener::bind("0.0.0.0:9000").unwrap();
@@ -8,24 +6,64 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream);
+        let cl = req::Client { tag: b'{' };
+
+        cl.handle_connection(stream);
     }
 }
 
-fn handle_connection(mut stream: TcpStream) {
-    let mut buffer = [0; 1024 * 4];
-    stream.read(&mut buffer).unwrap();
+mod req {
+    use gcores_rss::{get, Channel, Param};
+    //use std::error::Error;
+    use serde::Deserialize;
+    use std::io::prelude::*;
+    use std::net::TcpStream;
 
-    let contents = buffer
-        .iter()
-        .skip_while(|&&x| x != b'{')
-        .map(|&x| x)
-        .collect::<Vec<u8>>();
+    pub(crate) struct Client {
+        pub tag: u8,
+    }
 
-    let body = String::from_utf8(contents).unwrap_or("body string error".to_string());
+    impl Client {
+        fn get_body(&self, buffer: &[u8]) -> Vec<u8> {
+            buffer
+                .iter()
+                .skip_while(|&&x| x != self.tag)
+                .map(|&x| x)
+                .collect::<Vec<u8>>()
+        }
 
-    let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", body);
+        pub fn handle_connection(&self, mut stream: TcpStream) {
+            let mut buffer = [0; 1024 * 4];
+            stream.read(&mut buffer).unwrap();
+            let body_slice = self.get_body(&buffer);
 
-    stream.write(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
-}
+            let body: String = match serde_json::from_slice::<Request>(&body_slice){
+                Ok(request)=> {
+                    let xml: String = get();
+                }
+                Err(e)=> e.to_string()
+            };
+
+            let response = format!("HTTP/1.1 200 OK\r\n\r\n{}",body);
+            stream.write(response.as_bytes()).unwrap();
+            stream.flush().unwrap();
+        }
+    }
+
+    #[derive(Deserialize)]
+    struct Request {
+        #[serde(rename="storage_param")]
+        oss_param: S3Param,
+        channel: Channel,
+        param: Param,
+    }
+
+    #[derive(Deserialize)]
+    struct S3Param {
+        service: String,
+        bucket: String,
+        key: String,
+        acl: Option<String>,
+        content_type: Option<String>,
+    }
+} /* req */
