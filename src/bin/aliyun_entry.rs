@@ -14,8 +14,8 @@ fn main() {
 
 mod req {
     use gcores_rss::{get, Channel, Param};
-    //use std::error::Error;
     use serde::Deserialize;
+    use std::error::Error;
     use std::io::prelude::*;
     use std::net::TcpStream;
 
@@ -32,34 +32,42 @@ mod req {
                 .collect::<Vec<u8>>()
         }
 
-        pub fn handle_connection(&self, mut stream: TcpStream) {
+        pub async fn handle_connection(&self, mut stream: TcpStream) {
             let mut buffer = [0; 1024 * 4];
             stream.read(&mut buffer).unwrap();
             let body_slice = self.get_body(&buffer);
 
-            let body: String = match serde_json::from_slice::<Request>(&body_slice){
-                Ok(request)=> {
-                    let xml: String = get();
-                }
-                Err(e)=> e.to_string()
+            let body: String = match serde_json::from_slice::<Request>(&body_slice) {
+                Ok(request) => match get(request.param, request.channel).await {
+                    Ok(xml) => match save_to_oss(request.oss_param, xml) {
+                        Ok(_) => "oss saved".to_string(),
+                        Err(e) => e.to_string(),
+                    },
+                    Err(e) => e.to_string(),
+                },
+                Err(e) => e.to_string(),
             };
 
-            let response = format!("HTTP/1.1 200 OK\r\n\r\n{}",body);
+            let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", body);
             stream.write(response.as_bytes()).unwrap();
             stream.flush().unwrap();
         }
     }
 
+    fn save_to_oss(param: OssParam, val: String) -> Result<String, Box<dyn Error>> {
+        unimplemented!()
+    }
+
     #[derive(Deserialize)]
     struct Request {
-        #[serde(rename="storage_param")]
-        oss_param: S3Param,
+        #[serde(rename = "storage_param")]
+        oss_param: OssParam,
         channel: Channel,
         param: Param,
     }
 
     #[derive(Deserialize)]
-    struct S3Param {
+    struct OssParam {
         service: String,
         bucket: String,
         key: String,
