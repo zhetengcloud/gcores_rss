@@ -18,8 +18,16 @@ async fn main() {
             let req: req::Request = serde_json::from_slice(&data).unwrap();
             (id, secret, req)
         })
-        .map(|(id, secret, req): (String, String, req::Request)| {
-            format!("{},{}\ntitle:{}", id, secret, req.channel.title)
+        .untuple_one()
+        .and_then(|id, secret, req: req::Request| async move {
+            let req::Request {
+                oss_param: _,
+                param,
+                channel,
+            } = req;
+            let xml: String = gcores_rss::get(param, channel).await.unwrap();
+
+            Ok::<String, warp::reject::Rejection>(format!("{},{}\ntitle:{}", id, secret, xml))
         });
 
     warp::serve(route).run(([0, 0, 0, 0], 9000)).await;
