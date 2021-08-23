@@ -34,8 +34,8 @@ async fn main() {
         })
         .untuple_one()
         .and_then(|param, xml| async move {
-            req::save_to_oss(param, xml).await;
-            Ok::<String, warp::reject::Rejection>("saved to oss".to_string())
+            let resp = req::save_to_oss(param, xml);
+            Ok::<String, warp::reject::Rejection>(resp)
         });
 
     warp::serve(route).run(([0, 0, 0, 0], 9000)).await;
@@ -43,11 +43,39 @@ async fn main() {
 
 #[allow(dead_code)]
 mod req {
+    use curl::easy::Easy;
     use gcores_rss::{Channel, Param};
     use serde::Deserialize;
+    use std::io::Read;
 
-    pub async fn save_to_oss(param: OssParam, xml: String) {
-        unimplemented!()
+    pub fn save_to_oss(param: OssParam, xml: String) -> String {
+        let OssParam {
+            endpoint,
+            bucket,
+            key,
+            ..
+        } = param;
+        let mut buf: Vec<u8> = Vec::new();
+        let mut easy = Easy::new();
+        easy.url(format!("http://{}.{}/{}", bucket, endpoint, key).as_ref())
+            .unwrap();
+        easy.put(true).unwrap();
+
+        {
+            let mut data = xml.as_bytes();
+            let mut transfer = easy.transfer();
+            transfer
+                .read_function(|buf| Ok(data.read(buf).unwrap_or(0)))
+                .unwrap();
+            transfer
+                .write_function(|data| {
+                    buf.extend_from_slice(data);
+                    Ok(data.len())
+                })
+                .unwrap();
+            transfer.perform().unwrap();
+        }
+        String::from_utf8(buf).unwrap()
     }
 
     #[derive(Deserialize)]
@@ -65,6 +93,7 @@ mod req {
         pub key: String,
         pub acl: Option<String>,
         pub content_type: Option<String>,
+        pub endpoint: String,
         #[serde(skip)]
         pub access_id: Option<String>,
         #[serde(skip)]
