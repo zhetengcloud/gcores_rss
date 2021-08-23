@@ -1,69 +1,49 @@
-use std::net::TcpListener;
+use log::LevelFilter;
+use simple_logger::SimpleLogger;
+use warp::Filter;
 
-fn main() {
-    let listener = TcpListener::bind("0.0.0.0:9000").unwrap();
+#[tokio::main]
+async fn main() {
+    SimpleLogger::new()
+        .with_level(LevelFilter::Debug)
+        .init()
+        .unwrap();
 
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
+    // POST /invoke
+    let route = warp::path!("invoke")
+        .and(warp::header::<String>("x-fc-access-key-id"))
+        .and(warp::header::<String>("x-fc-access-key-secret"))
+        .and(warp::body::bytes())
+        .map(|id, secret, data: bytes::Bytes| {
+            let req: req::Request = serde_json::from_slice(&data).unwrap();
+            (id, secret, req)
+        })
+        .map(|(id, secret, req): (String, String, req::Request)| {
+            format!("{},{}\ntitle:{}", id, secret, req.channel.title)
+        });
 
-        let cl = req::Client { tag: b'{' };
-
-        cl.handle_connection(stream);
-    }
+    warp::serve(route).run(([0, 0, 0, 0], 9000)).await;
 }
 
+#[allow(dead_code)]
 mod req {
-    use gcores_rss::{get, Channel, Param};
-    //use std::error::Error;
+    use gcores_rss::{Channel, Param};
     use serde::Deserialize;
-    use std::io::prelude::*;
-    use std::net::TcpStream;
 
-    pub(crate) struct Client {
-        pub tag: u8,
-    }
-
-    impl Client {
-        fn get_body(&self, buffer: &[u8]) -> Vec<u8> {
-            buffer
-                .iter()
-                .skip_while(|&&x| x != self.tag)
-                .map(|&x| x)
-                .collect::<Vec<u8>>()
-        }
-
-        pub fn handle_connection(&self, mut stream: TcpStream) {
-            let mut buffer = [0; 1024 * 4];
-            stream.read(&mut buffer).unwrap();
-            let body_slice = self.get_body(&buffer);
-
-            let body: String = match serde_json::from_slice::<Request>(&body_slice){
-                Ok(request)=> {
-                    let xml: String = get();
-                }
-                Err(e)=> e.to_string()
-            };
-
-            let response = format!("HTTP/1.1 200 OK\r\n\r\n{}",body);
-            stream.write(response.as_bytes()).unwrap();
-            stream.flush().unwrap();
-        }
+    #[derive(Deserialize)]
+    pub struct Request {
+        #[serde(rename = "storage_param")]
+        pub oss_param: S3Param,
+        pub channel: Channel,
+        pub param: Param,
     }
 
     #[derive(Deserialize)]
-    struct Request {
-        #[serde(rename="storage_param")]
-        oss_param: S3Param,
-        channel: Channel,
-        param: Param,
-    }
-
-    #[derive(Deserialize)]
-    struct S3Param {
-        service: String,
-        bucket: String,
-        key: String,
-        acl: Option<String>,
-        content_type: Option<String>,
+    pub struct S3Param {
+        pub service: String,
+        pub bucket: String,
+        pub key: String,
+        pub acl: Option<String>,
+        pub content_type: Option<String>,
     }
 } /* req */
