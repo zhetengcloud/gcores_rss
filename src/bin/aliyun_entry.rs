@@ -43,23 +43,52 @@ async fn main() {
 
 #[allow(dead_code)]
 mod req {
-    use curl::easy::Easy;
+    use curl::easy::{Easy, List};
     use gcores_rss::{Channel, Param};
     use serde::Deserialize;
+    use sloppy_auth::{aliyun, util};
     use std::io::Read;
 
     pub fn save_to_oss(param: OssParam, xml: String) -> String {
+        println!("save to oss {:?}",param);
         let OssParam {
             endpoint,
             bucket,
             key,
+            access_id,
+            access_secret,
             ..
         } = param;
         let mut buf: Vec<u8> = Vec::new();
         let mut easy = Easy::new();
         easy.url(format!("http://{}.{}/{}", bucket, endpoint, key).as_ref())
             .unwrap();
+
         easy.put(true).unwrap();
+
+        let format_date = util::get_date();
+        let mut headers = List::new();
+        let auth = aliyun::oss::Client {
+            verb: "PUT".to_string(),
+            content: vec![],
+            oss_headers: [].to_vec(),
+            bucket: bucket.clone(),
+            content_type: "".to_string(),
+            date: Some(format_date.clone()),
+            key,
+            key_id: access_id.expect("access id error"),
+            key_secret: access_secret.expect("access secret error"),
+        };
+
+        headers
+            .append(&format!("authorization: {}", auth.make_authorization()))
+            .unwrap();
+        headers.append(&format!("Host: {}.{}", bucket, endpoint)).unwrap();
+        headers
+            .append(&format!("date: {}", format_date.clone()))
+            .unwrap();
+
+        easy.http_headers(headers).unwrap();
 
         {
             let mut data = xml.as_bytes();
