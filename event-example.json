@@ -25,6 +25,8 @@
     "key": "rss.xml",
     "acl": "public-read",
     "content_type":"application/xml",
-    "endpoint": "oss-cn-shanghai-internal.aliyuncs.com"
+    "endpoint": "oss-cn-shanghai-internal.aliyuncs.com",
+    "access_id": "abcd",
+    "access_secret": "abcd"
   }
 }

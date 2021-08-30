@@ -19,16 +19,13 @@ async fn main() {
             (id, secret, req)
         })
         .untuple_one()
-        .and_then(|id, secret, req: req::Request| async move {
+        .and_then(|_id, _secret, req: req::Request| async move {
             let req::Request {
-                mut oss_param,
+                oss_param,
                 param,
                 channel,
             } = req;
             let xml: String = gcores_rss::get(param, channel).await.unwrap();
-
-            oss_param.access_id = Some(id);
-            oss_param.access_secret = Some(secret);
 
             Ok::<(req::OssParam, String), warp::reject::Rejection>((oss_param, xml))
         })
@@ -121,9 +118,7 @@ mod req {
         pub acl: Option<String>,
         pub content_type: Option<String>,
         pub endpoint: String,
-        #[serde(skip)]
         pub access_id: Option<String>,
-        #[serde(skip)]
         pub access_secret: Option<String>,
     }
 } /* req */
