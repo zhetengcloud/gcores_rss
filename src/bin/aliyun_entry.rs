@@ -70,10 +70,8 @@ mod req {
         let mut headers = List::new();
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            content: vec![],
             oss_headers: [].to_vec(),
             bucket: bucket.clone(),
-            content_type: "".to_string(),
             date: Some(format_date.clone()),
             key,
             key_id: access_id.expect("access id error"),
