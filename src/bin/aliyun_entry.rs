@@ -13,13 +13,14 @@ async fn main() {
     let route = warp::path!("invoke")
         .and(warp::header::<String>("x-fc-access-key-id"))
         .and(warp::header::<String>("x-fc-access-key-secret"))
+        .and(warp::header::<String>("x-fc-security-token"))
         .and(warp::body::bytes())
-        .map(|id, secret, data: bytes::Bytes| {
+        .map(|id, secret, token, data: bytes::Bytes| {
             let req: req::Request = serde_json::from_slice(&data).unwrap();
-            (id, secret, req)
+            (id, secret, token, req)
         })
         .untuple_one()
-        .and_then(|_id, _secret, req: req::Request| async move {
+        .and_then(|id, secret, token, req: req::Request| async move {
             let req::Request {
                 oss_param,
                 param,
@@ -27,11 +28,13 @@ async fn main() {
             } = req;
             let xml: String = gcores_rss::get(param, channel).await.unwrap();
 
-            Ok::<(req::OssParam, String), warp::reject::Rejection>((oss_param, xml))
+            let sts = req::STS { id, secret, token };
+
+            Ok::<(req::OssParam, req::STS, String), warp::reject::Rejection>((oss_param, sts, xml))
         })
         .untuple_one()
-        .and_then(|param, xml| async move {
-            let resp = req::save_to_oss(param, xml);
+        .and_then(|param, sts, xml| async move {
+            let resp = req::save_to_oss(param, sts, xml);
             Ok::<String, warp::reject::Rejection>(resp)
         });
 
@@ -46,16 +49,22 @@ mod req {
     use sloppy_auth::{aliyun, util};
     use std::io::Read;
 
-    pub fn save_to_oss(param: OssParam, xml: String) -> String {
-        println!("save to oss {:?}",param);
+    pub struct STS {
+        pub id: String,
+        pub secret: String,
+        pub token: String,
+    }
+
+    pub fn save_to_oss(param: OssParam, sts: STS, xml: String) -> String {
         let OssParam {
             endpoint,
             bucket,
             key,
-            access_id,
-            access_secret,
             ..
         } = param;
+
+        let STS { id, secret, token } = sts;
+
         let mut buf: Vec<u8> = Vec::new();
         let mut easy = Easy::new();
         easy.url(format!("http://{}.{}/{}", bucket, endpoint, key).as_ref())
@@ -65,20 +74,28 @@ mod req {
 
         let format_date = util::get_date();
         let mut headers = List::new();
+
+        let secret_header = ("x-oss-security-token".to_string(), token);
+
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            oss_headers: [].to_vec(),
+            oss_headers: vec![secret_header.clone()],
             bucket: bucket.clone(),
             date: Some(format_date.clone()),
             key,
-            key_id: access_id.expect("access id error"),
-            key_secret: access_secret.expect("access secret error"),
+            key_id: id,
+            key_secret: secret,
         };
 
         headers
             .append(&format!("authorization: {}", auth.make_authorization()))
             .unwrap();
-        headers.append(&format!("Host: {}.{}", bucket, endpoint)).unwrap();
+        headers
+            .append(&format!("Host: {}.{}", bucket, endpoint))
+            .unwrap();
+        headers
+            .append(&format!("{}:{}", secret_header.0, secret_header.1))
+            .unwrap();
         headers
             .append(&format!("date: {}", format_date.clone()))
             .unwrap();
