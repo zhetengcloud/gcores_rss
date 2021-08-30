@@ -135,7 +135,5 @@ mod req {
         pub acl: Option<String>,
         pub content_type: Option<String>,
         pub endpoint: String,
-        pub access_id: Option<String>,
-        pub access_secret: Option<String>,
     }
 } /* req */
