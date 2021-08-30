@@ -49,7 +49,7 @@ mod req {
     use sloppy_auth::{aliyun, util};
     use std::io::Read;
 
-    pub(crate) struct STS {
+    pub struct STS {
         pub id: String,
         pub secret: String,
         pub token: String,
@@ -79,7 +79,7 @@ mod req {
 
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            oss_headers: vec![secret_header],
+            oss_headers: vec![secret_header.clone()],
             bucket: bucket.clone(),
             date: Some(format_date.clone()),
             key,
