@@ -26,5 +26,5 @@ make invoke_ali
 ```
 
 #### Resource
-机核api：https://www.gcores.com/gapi/v1/radios
+机核api：https://www.gcores.com/gapi/v1/radios  
 RSS feed: http://feed.tangsuanradio.com/gadio.xml
