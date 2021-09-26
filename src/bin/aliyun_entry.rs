@@ -62,9 +62,9 @@ mod req {
             service: _,
             content_type,
         } = param;
-        let acl = acl.unwrap_or("public-read".to_string());
-        let content_type = content_type.unwrap_or("application/xml".to_string());
-        let endpoint = format!("http://{}.{}/{}", bucket.clone(), endpoint.clone(), key);
+        let acl1 = acl.unwrap_or("public-read".to_string());
+        let content_type1 = content_type.unwrap_or("application/xml".to_string());
+        let req_url = format!("http://{}.{}/{}", bucket.clone(), endpoint.clone(), key);
 
         let STS { id, secret, token } = sts;
 
@@ -72,11 +72,11 @@ mod req {
 
         let secret_header = ("x-oss-security-token".to_string(), token);
 
-        let acl_header = ("x-oss-object-acl".to_string(), acl);
+        let acl_header = ("x-oss-object-acl".to_string(), acl1);
 
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            oss_headers: vec![secret_header.clone(), acl_header.clone()],
+            oss_headers: vec![secret_header.clone(), /*acl_header.clone()*/],
             bucket: bucket.clone(),
             date: Some(format_date.clone()),
             key,
@@ -84,15 +84,15 @@ mod req {
             key_secret: secret,
         };
 
-        ureq::put(&endpoint)
+        ureq::put(&req_url)
             .set("authorization", auth.make_authorization().as_str())
             .set("Host", &format!("{}.{}", bucket, endpoint))
-            .set("Content-Type", content_type.as_str())
+            .set("Content-Type", content_type1.as_str())
             .set(&secret_header.0, &secret_header.1)
-            .set(&acl_header.0, &acl_header.1)
+            //.set(&acl_header.0, &acl_header.1)
             .set("date", &format_date.clone())
-            .send_string(&xml)
-            .expect("oss send string failed")
+            .send_bytes(xml.as_bytes())
+            .expect("oss send xml failed")
             .into_string()
             .expect("oss response to_string failed")
     }
