@@ -71,13 +71,13 @@ mod req {
 
         let secret_header = ("x-oss-security-token".to_string(), token);
 
-        let acl_header = ("x-oss-object-acl".to_string(), acl1);
+        let x_oss_acl = "x-oss-object-acl";
 
         let body_md5 = util::md5(xml.as_bytes().to_vec());
 
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            oss_headers: vec![secret_header.clone() /*acl_header.clone()*/],
+            oss_headers: vec![secret_header.clone(), (x_oss_acl.to_string(), acl1.clone())],
             bucket: bucket.clone(),
             date: Some(format_date.clone()),
             content_type: content_type1.clone(),
@@ -93,7 +93,7 @@ mod req {
             .set("Content-Type", content_type1.as_str())
             .set("Content-MD5", body_md5.as_str())
             .set(&secret_header.0, &secret_header.1)
-            //.set(&acl_header.0, &acl_header.1)
+            .set(x_oss_acl, &acl1)
             .set("date", &format_date.clone())
             .send_bytes(xml.as_bytes())
             .expect("oss send xml failed")
