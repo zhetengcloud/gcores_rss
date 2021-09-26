@@ -41,13 +41,11 @@ async fn main() {
     warp::serve(route).run(([0, 0, 0, 0], 9000)).await;
 }
 
-#[allow(dead_code)]
 mod req {
-    use curl::easy::{Easy, List};
     use gcores_rss::{Channel, Param};
     use serde::Deserialize;
     use sloppy_auth::{aliyun, util};
-    use std::io::Read;
+    //use std::io::Read;
 
     pub struct STS {
         pub id: String,
@@ -60,22 +58,17 @@ mod req {
             endpoint,
             bucket,
             key,
-            ..
+            acl,
+            service: _,
+            content_type: _,
         } = param;
 
         let STS { id, secret, token } = sts;
 
-        let mut buf: Vec<u8> = Vec::new();
-        let mut easy = Easy::new();
-        easy.url(format!("http://{}.{}/{}", bucket, endpoint, key).as_ref())
-            .unwrap();
-
-        easy.put(true).unwrap();
-
         let format_date = util::get_date();
-        let mut headers = List::new();
 
         let secret_header = ("x-oss-security-token".to_string(), token);
+        let acl_header = ("x-oss-object-acl".to_string(), acl);
 
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
@@ -87,6 +80,7 @@ mod req {
             key_secret: secret,
         };
 
+        /*
         headers
             .append(&format!("authorization: {}", auth.make_authorization()))
             .unwrap();
@@ -117,6 +111,8 @@ mod req {
             transfer.perform().unwrap();
         }
         String::from_utf8(buf).unwrap()
+        */
+        unimplemented!()
     }
 
     #[derive(Deserialize)]

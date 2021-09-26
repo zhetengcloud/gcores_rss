@@ -51,7 +51,6 @@ mod url {
 pub mod req {
     use super::url::concat_url;
     use crate::model::api;
-    use curl::easy::Easy;
     use simple_error::SimpleError;
     use std::error::Error;
 
@@ -69,22 +68,7 @@ pub mod req {
             let url1 = concat_url(param.url.clone(), param.start, param.size)
                 .ok_or_else(|| SimpleError::new("url error"))?;
 
-            let mut buf: Vec<u8> = Vec::new();
-            let mut easy = Easy::new();
-            easy.url(&url1).unwrap();
-
-            {
-                let mut transfer = easy.transfer();
-                transfer
-                    .write_function(|data| {
-                        buf.extend_from_slice(data);
-                        Ok(data.len())
-                    })
-                    .unwrap();
-                transfer.perform().unwrap();
-            }
-
-            let resp: api::Response = serde_json::from_slice(&buf)?;
+            let resp: api::Response = ureq::get(&url1).call()?.into_json()?;
 
             Ok(resp)
         }
