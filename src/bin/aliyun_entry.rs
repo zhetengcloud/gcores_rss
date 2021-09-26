@@ -45,7 +45,6 @@ mod req {
     use gcores_rss::{Channel, Param};
     use serde::Deserialize;
     use sloppy_auth::{aliyun, util};
-    //use std::io::Read;
 
     pub struct STS {
         pub id: String,
@@ -74,11 +73,15 @@ mod req {
 
         let acl_header = ("x-oss-object-acl".to_string(), acl1);
 
+        let body_md5 = util::md5(xml.as_bytes().to_vec());
+
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            oss_headers: vec![secret_header.clone(), /*acl_header.clone()*/],
+            oss_headers: vec![secret_header.clone() /*acl_header.clone()*/],
             bucket: bucket.clone(),
             date: Some(format_date.clone()),
+            content_type: content_type1.clone(),
+            content_md5: body_md5.clone(),
             key,
             key_id: id,
             key_secret: secret,
@@ -87,7 +90,8 @@ mod req {
         ureq::put(&req_url)
             .set("authorization", auth.make_authorization().as_str())
             .set("Host", &format!("{}.{}", bucket, endpoint))
-            //.set("Content-Type", content_type1.as_str())
+            .set("Content-Type", content_type1.as_str())
+            .set("Content-MD5", body_md5.as_str())
             .set(&secret_header.0, &secret_header.1)
             //.set(&acl_header.0, &acl_header.1)
             .set("date", &format_date.clone())
