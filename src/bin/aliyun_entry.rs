@@ -87,7 +87,7 @@ mod req {
         ureq::put(&req_url)
             .set("authorization", auth.make_authorization().as_str())
             .set("Host", &format!("{}.{}", bucket, endpoint))
-            .set("Content-Type", content_type1.as_str())
+            //.set("Content-Type", content_type1.as_str())
             .set(&secret_header.0, &secret_header.1)
             //.set(&acl_header.0, &acl_header.1)
             .set("date", &format_date.clone())
