@@ -60,19 +60,23 @@ mod req {
             key,
             acl,
             service: _,
-            content_type: _,
+            content_type,
         } = param;
+        let acl = acl.unwrap_or("public-read".to_string());
+        let content_type = content_type.unwrap_or("application/xml".to_string());
+        let endpoint = format!("http://{}.{}/{}", bucket.clone(), endpoint.clone(), key);
 
         let STS { id, secret, token } = sts;
 
         let format_date = util::get_date();
 
         let secret_header = ("x-oss-security-token".to_string(), token);
+
         let acl_header = ("x-oss-object-acl".to_string(), acl);
 
         let auth = aliyun::oss::Client {
             verb: "PUT".to_string(),
-            oss_headers: vec![secret_header.clone()],
+            oss_headers: vec![secret_header.clone(), acl_header.clone()],
             bucket: bucket.clone(),
             date: Some(format_date.clone()),
             key,
@@ -80,39 +84,17 @@ mod req {
             key_secret: secret,
         };
 
-        /*
-        headers
-            .append(&format!("authorization: {}", auth.make_authorization()))
-            .unwrap();
-        headers
-            .append(&format!("Host: {}.{}", bucket, endpoint))
-            .unwrap();
-        headers
-            .append(&format!("{}:{}", secret_header.0, secret_header.1))
-            .unwrap();
-        headers
-            .append(&format!("date: {}", format_date.clone()))
-            .unwrap();
-
-        easy.http_headers(headers).unwrap();
-
-        {
-            let mut data = xml.as_bytes();
-            let mut transfer = easy.transfer();
-            transfer
-                .read_function(|buf| Ok(data.read(buf).unwrap_or(0)))
-                .unwrap();
-            transfer
-                .write_function(|data| {
-                    buf.extend_from_slice(data);
-                    Ok(data.len())
-                })
-                .unwrap();
-            transfer.perform().unwrap();
-        }
-        String::from_utf8(buf).unwrap()
-        */
-        unimplemented!()
+        ureq::put(&endpoint)
+            .set("authorization", auth.make_authorization().as_str())
+            .set("Host", &format!("{}.{}", bucket, endpoint))
+            .set("Content-Type", content_type.as_str())
+            .set(&secret_header.0, &secret_header.1)
+            .set(&acl_header.0, &acl_header.1)
+            .set("date", &format_date.clone())
+            .send_string(&xml)
+            .expect("oss send string failed")
+            .into_string()
+            .expect("oss response to_string failed")
     }
 
     #[derive(Deserialize)]
